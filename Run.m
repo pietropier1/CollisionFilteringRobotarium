@@ -1,8 +1,8 @@
 % Main robot simulation runner
 clc; close all; clear classes;
-makemovie = false;                                                           % Record matlab plot in video 
+makemovie = false;                                                          % Record matlab plot in video 
 arena.ggp = 0.06;                                                           % Radius of robots protected area
-
+arena.dt = 0.05;                                                            % Simulation time step    
 % ========= Build Domain Grid =============
 [arena,InitConf] = buildArena('3track',arena);                             
 % ========= Compute cell areas =============

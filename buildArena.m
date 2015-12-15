@@ -83,7 +83,7 @@ switch type
         arena.Grid{3} = dilationPoly(arena.grid{3},arena.ggp);
         InitConf{1} = [1];
         InitConf{2} = [2 3];
-        InitConf{3} = [];
+        InitConf{3} = [4 5 6];
         switch 2
             case 2
                 arena.M = eye(arena.cellNumber,arena.cellNumber);

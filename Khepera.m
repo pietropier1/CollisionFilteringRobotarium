@@ -1,16 +1,11 @@
 classdef Khepera < handle
-    % Physical representation of robots
+    % Simulator of physical robot
     
     properties
-        ID;
-        myState;
-        w;              % angular velocity
-        v;              % linear velocity
-        cell;
-    end
-    
-    properties (Constant)
-       radius = 0.05; 
+        ID;             % robot ID
+        myState;        % robot own state [x;y;theta];
+        cell;           % cell occupied
+        dt;             % simulation time step
     end
     
     methods % contructor
@@ -19,28 +14,16 @@ classdef Khepera < handle
             khepera.cell = cell;
             X = randInPoly(arena.grid{cell});
             khepera.myState = [X;2*pi*rand(1,1)];
+            khepera.dt = arena.dt;
         end
     end
     
     methods    
-        function move(khepera,v,w)
-            dt = 0.05;
-            khepera.v = v;
-            khepera.w = w;
-            khepera.myState = [khepera.myState(1) + khepera.v.*cos(khepera.myState(3) + khepera.w.*dt)*dt;
-                             khepera.myState(2) + khepera.v.*sin(khepera.myState(3) + khepera.w.*dt)*dt;
-                             khepera.myState(3) + khepera.w.*dt];
+        function updateDynamics(khepera,v,w)
+            khepera.myState = [khepera.myState(1) + v.*cos(khepera.myState(3) + w.*khepera.dt)*khepera.dt;
+                               khepera.myState(2) + v.*sin(khepera.myState(3) + w.*khepera.dt)*khepera.dt;
+                               khepera.myState(3) + w.*khepera.dt];
             khepera.myState(3) = wrapTo2Pi(khepera.myState(3));        
-        end
-        
-    end
-    
-    methods (Access = 'private')
-        function position = randomInCell(khepera,arena)
-            c = khepera.cell;
-            r = khepera.radius;
-            position = [arena.grid{c}(1,1)+r + (arena.grid{c}(1,2) - arena.grid{c}(1,1) -2*r)*rand(1,1);
-                        arena.grid{c}(2,2)-r + (arena.grid{c}(2,3) - arena.grid{c}(2,2) +2*r)*rand(1,1)];       
         end
         
     end

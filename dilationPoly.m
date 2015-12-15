@@ -1,8 +1,8 @@
 function [ vert_dil ] = dilationPoly( vert , dsp )
-% dilate polygon translating edges
+% dilate polygon by translating edges. Creates a new set of vertices corresponding to the polygon obtained by translation of 
+% orginal edges by ammount DSP. Translation are performed towards the center of the polygon.
 
-
-vert_exp = [vert(1,:) vert(1,1);vert(2,:),vert(2,1)];
+vert_exp = [vert(1,:) vert(1,1);vert(2,:),vert(2,1)];   % concatenate last vertex to list of vertices
 n_vert = size(vert,2);                                  % number of vertices
 
 % calculate slope, angle of inclination and intercept of edges
@@ -16,8 +16,8 @@ end
 inter = vert(2,:) - slope.*vert(1,:);
 
 inter_p = inter - dsp./cos(alpha);          % new intercepts for translated edges
-inter_p = [inter_p,inter_p(1)];
-slope = [slope,slope(1)];
+inter_p = [inter_p,inter_p(1)];             % concatenate first value at the end
+slope = [slope,slope(1)];                   % concatenate first value at the end
 
 % compute new edges intersections
 xi = zeros(1,n_vert);
