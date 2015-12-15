@@ -7,11 +7,6 @@ S.pb = uicontrol('string','Stop Simulation!','callback',{@pb_call},'units','pixe
                  'fontsize',15,'Backgroundcolor','r','fontweight','bold','position',[10 10 150 110]);
 drawnow; pause(0.01) % ===================================
 
-% ========= Log Data File Init ===============
-logid = fopen(['datalog',char(datetime),'.txt'],'w');
-fprintf(logid,'%s\r\n',' *** New Robot Session ***');
-% ============================================
-
 
 % Select simulation case 
 if nargin == 3                  % matlab simulation 
@@ -20,6 +15,9 @@ if nargin == 3                  % matlab simulation
 elseif nargin == 2              % robotarium
     data = r.getPoses();
     type = 'robo';
+    % ========= Log Data File Init ===============
+    logid = fopen(['datalog',char(datetime),'.txt'],'w');
+    fprintf(logid,'%s\r\n',' *** New Robot Session ***');
 else
     error('Unexpected number of input variables');
 end
@@ -28,7 +26,6 @@ end
 for aa = 1:arena.N              % create agents
     agent(aa) = Agent(aa,arena,data(:,aa));
 end
-% ===============================================
 
 screenPlot = ArenaPlot('screen',arena,agent);       % plots
 
@@ -57,9 +54,6 @@ switch type
                 [v,w] = motion(agent(aa),data(:,aa),new_goal(:,aa));
                 V(aa) = v; W(aa) = w;
             end
-%             disp(num2str(V))
-%             disp(num2str(W))
-%             disp('****')
             r.setVelocities([V; W]);
           
             drawnow;
@@ -77,10 +71,9 @@ switch type
             
         end      
         r.stopAllRobots;        % stop robots
-        
+        fclose(logid);
 end
 
-fclose(logid);
 closeVideo(screenPlot);
 
 function [] = pb_call(varargin)

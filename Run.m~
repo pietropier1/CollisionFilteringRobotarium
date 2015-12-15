@@ -1,6 +1,6 @@
 % Main robot simulation runner
 clc; close all; clear classes;
-makemovie = false;                                                           % Record matlab plot in video 
+makemovie = true;                                                           % Record matlab plot in video 
 arena.ggp = 0.06;                                                           % Radius of robots protected area
 
 % ========= Build Domain Grid =============
@@ -17,19 +17,21 @@ arena.agSel = 1;                                                            % Se
 arena.makemovie = makemovie;
 
 % ========== Select Type of Analysis =============
-switch 'simulation'
+switch 'experiment'
     case 'simulation'                                                       % All-MATLAB simulation case
         arena.N = max([InitConf{:}]);                                       % Number of agents
         
-        % ==== Initialize virtual robots ======                         
+        % ==== Initialize virtual robots ======
+        arena.rho = zeros(arena.cellNumber,1);                              % Agent distribution: fraction of agents in each cell
         for cell = 1:arena.cellNumber
             if ~isempty( InitConf{cell} )
                 for kID = InitConf{cell}
                     khepera(kID) = Khepera(kID,cell,arena);                 % Physical agent
                 end
             end
+            arena.rho(cell) = size(InitConf{cell},2);
         end
-        [ arena.rho ] = findDistribution( [khepera.myState],arena );        % Agent distribution: fraction of agents in each cell
+        arena.rho = arena.rho/arena.N;                                      % Normalize agent distribution
         
         if size(arena.M) ~= arena.cellNumber; error('Error MM size!'); end  % Check MM size
         optitrackClient = OptitrackSimulator();                             % Create fake stream machine
@@ -47,15 +49,14 @@ switch 'simulation'
 
         % Get list of available robots
         robots = r.getAvailableRobots();
-        arena.N = length(robots);                                           % Total number of robots
-        r.setDeltaDiskDistance(10.0);                                       % Set neighbor disk
+        arena.N = length(robots);                                           
+        r.setDeltaDiskDistance(10.0); %set neighbor disk
         %Get initial robot poses
         poses = r.getPoses();
-        [ arena.rho ] = findDistribution( poses,arena );                    % Agent distribution: fraction of agents in each cell          
+        [ arena.rho ] = findDistribution( poses,arena );
 
         if size(arena.M) ~= arena.cellNumber; error('Error MM size!'); end
         pause(0.001)
-        % ========= Run Simulation =============
         robotArena(arena,r);
         
 end

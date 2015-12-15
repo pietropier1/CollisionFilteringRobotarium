@@ -1,4 +1,4 @@
-function [x , y , t ] = randInPoly(vert,n)
+function [X] = randInPoly(vert,n)
 
 % create random cooridnates inside a convex polygon
 % if 3 argout -> random number between (0;2*pi[
@@ -56,6 +56,6 @@ end
 % axis equal
 
 x = px(:,1); y = px(:,2);
-t = 2*pi*rand(1,1);
+X = [x;y];
 
 end

@@ -72,7 +72,8 @@ classdef Agent < handle
                 agent.belief = agent.rho; 
                 [~, agent.estimate] = max(agent.belief);
                 % ====== Assign initial random goal inside current cell ===
-                agent.goal = randInPoly(agent.Grid{agent.cell});
+                [xg,yg] = randInPoly(agent.Grid{agent.cell});
+                agent.goal = [xg;yg];
                 
                 % ======== Create estimation plot =============
                 if agent.selected == true; agent.plotindex = 1; 
@@ -94,7 +95,8 @@ classdef Agent < handle
         
         function dlt = get.dlt(agent)          
             dlt = agent.rcoll^2*pi;
-        end     
+        end
+        
     end
     
     methods
@@ -114,7 +116,8 @@ classdef Agent < handle
             % ======== Check on new cell =========
             if newcell == agent.cell
                 if dist2goal < agent.rcoll; 
-                    agent.goal = randInPoly(agent.Grid{newcell});
+                    [xg,yg] = randInPoly(agent.Grid{newcell});
+                    agent.goal = [xg;yg];
                 end      
             else
                 [xg,yg] = randInPoly(agent.Grid{newcell});
@@ -131,7 +134,8 @@ classdef Agent < handle
                 
                 % if the new goal from collision is not in current cell assign a new one
                 if ~inpolygon(new_goal(1,1),new_goal(2,1),agent.grid{agent.cell}(1,:),agent.grid{agent.cell}(2,:));
-                    new_goal = randInPoly(agent.Grid{agent.cell});
+                    [xg,yg] = randInPoly(agent.Grid{agent.cell});
+                    new_goal = [xg;yg];
                 end
                 agent.goal = new_goal;
                 agent.cell = findCell(agent,agent.goal);
@@ -139,13 +143,14 @@ classdef Agent < handle
             w = PID(agent);
             if abs(w) > agent.wMax; w = agent.wMax*w/abs(w); end % max ang.vel. limit 
             
-            % ============ Run Collision Filter =============
+            % run filter
+
             if rem(agent.measureTime,agent.measureWindow*agent.dt) == 0
                 disp('filter')
-                % ------------- Bayesian filter -------------
+                % -------- Bayesian filter -------------
                 %agent.estimate = BayesFilter(agent);
                 % --------------------------------------
-                % ----------- Viterbi algorithm ---------------
+                % ----------- Vit filter ---------------
                 agent.estimate = VITfilter(agent);
                 % --------------------------------------
                 agent.measureTime = 0;
@@ -164,6 +169,7 @@ classdef Agent < handle
                 set(agent.plotHandle2,'xdata',agent.plotindex,'ydata',agent.cell);
                 set(agent.plotHandle3,'ydata',agent.estimateStory);      
             end
+            % \\\\\\\\\\\\\\\\\\\\\\\\\\
             
         end
         
@@ -173,7 +179,8 @@ classdef Agent < handle
         
     end
         
-    methods(Access = 'private')   
+    methods(Access = 'private')
+        
         function w = PID(agent)
             persistent E;
             if isempty(E), E = 0; end

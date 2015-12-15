@@ -17,8 +17,8 @@ classdef Khepera < handle
         function khepera = Khepera(kID,cell,arena)
             khepera.ID = kID;
             khepera.cell = cell;
-            [x,y,t] = randInPoly(arena.grid{cell});
-            khepera.myState = [x;y;t];
+            X = randInPoly(arena.grid{cell});
+            khepera.myState = [X;2*pi*rand(1,1)];
         end
     end
     
