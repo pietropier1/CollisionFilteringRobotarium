@@ -1,0 +1,45 @@
+function [ vert_dil ] = dilationPoly( vert , dsp )
+% dilate polygon translating edges
+
+
+vert_exp = [vert(1,:) vert(1,1);vert(2,:),vert(2,1)];
+n_vert = size(vert,2);                                  % number of vertices
+
+% calculate slope, angle of inclination and intercept of edges
+slope = zeros(1,n_vert);
+alpha = zeros(1,n_vert);
+for aa = 1:n_vert
+    dx = vert_exp(1,aa+1)-vert_exp(1,aa) + ( (vert_exp(1,aa+1)-vert_exp(1,aa))==0)*eps;
+    slope(aa) = (vert_exp(2,aa+1)-vert_exp(2,aa)) /dx;
+    alpha(aa) = atan2(vert_exp(2,aa+1)-vert_exp(2,aa) , dx);
+end
+inter = vert(2,:) - slope.*vert(1,:);
+
+inter_p = inter - dsp./cos(alpha);          % new intercepts for translated edges
+inter_p = [inter_p,inter_p(1)];
+slope = [slope,slope(1)];
+
+% compute new edges intersections
+xi = zeros(1,n_vert);
+yi = zeros(1,n_vert);
+for vv = 1:n_vert
+    xi(vv) = (inter_p(vv) - inter_p(vv+1)) / (slope(vv+1)-slope(vv));
+    if abs(slope(vv)) < 2e10
+        yi(vv) = xi(vv) * slope(vv) + inter_p(vv);
+    else
+        yi(vv) = xi(vv) * slope(vv+1) + inter_p(vv+1);
+    end
+end
+
+vert_dil = [xi;yi];
+
+% % ===  plot === 
+% plot(vert_exp(1,:),vert_exp(2,:)); axis([-3 5 -3 5]), grid on,hold on
+% for pp = 1:n_vert
+%     plot([-5,5],[-5,5] .* slope(pp) + inter_p(pp),'k--')
+% end
+% plot(xi,yi,'or')
+
+
+end
+
