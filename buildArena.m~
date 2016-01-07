@@ -84,7 +84,8 @@ switch type
         InitConf{1} = [1];
         InitConf{2} = [2 3];
         InitConf{3} = [4 5 6];
-        arena.M = eye(arena.cellNumber,arena.cellNumber);
+                arena.M = eye(arena.cellNumber,arena.cellNumber);
+        end
 end
 
 

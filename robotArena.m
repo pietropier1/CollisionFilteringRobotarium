@@ -8,7 +8,7 @@ S.pb = uicontrol('string','Stop Simulation!','callback',{@pb_call},'units','pixe
 drawnow; pause(0.01) % ===================================
 
 
-% Select simulation case 
+% Automatically select case
 if nargin == 3                                                  % matlab simulation 
     data = OSupdate(r,khepera);                                 % pull new data
     type = 'sim';

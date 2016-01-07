@@ -14,15 +14,14 @@ for cc = 1:arena.cellNumber
 end
 
 % ====== Compute Markov Transition Matrix =============
-% uncomment when transitions between cells are desired
 %arena.M = initHMM(arena);                                                  % Markov M used in track (overwrite arena.M from buildArena function).          
 
-arena.agSel = 1;                                                            % Select which agent's filter is plot
+arena.agSel = 1;                                                            % Select agent index for filtering plot
 arena.makemovie = makemovie;
 
 % ========== Select Type of Analysis =============
-switch 'simulation'                                                         % Use 'simulation' or 'experiment'
-    case 'simulation'                                                       % Use this when running MATLAB simulation
+switch 'simulation'
+    case 'simulation'                                                       % All-MATLAB simulation case
         arena.N = max([InitConf{:}]);                                       % Number of agents
         
         % ==== Initialize virtual robots ======                         
@@ -42,7 +41,7 @@ switch 'simulation'                                                         % Us
         robotArena(arena,optitrackClient,khepera);                      
         
         
-    case 'experiment'                                                       % Use this when running experiments
+    case 'experiment'
 
         %====== Robotarium Initialization ======== 
         r = robotariumMatlabAPI('coverage', 6);
