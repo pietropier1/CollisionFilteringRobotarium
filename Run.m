@@ -1,4 +1,8 @@
 % Main robot simulation runner
+
+% Think about adding a GUI for parameters control
+
+
 clc; close all; clear classes;
 makemovie = false;                                                          % Record matlab plot in video 
 arena.ggp = 0.06;                                                           % Radius of robots protected area
