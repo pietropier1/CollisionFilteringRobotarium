@@ -1,7 +1,6 @@
 function [X] = randInPoly(vert,n)
 
-% create random cooridnates inside a convex polygon
-% if 3 argout -> random number between (0;2*pi[
+% create random cooridnates inside a triangle
 
 % VARGIN: vert = ordered vertex of polygon [x1,x2,...xn;y1,y2,...yn]
 %            n = number of point to be created (1 default)

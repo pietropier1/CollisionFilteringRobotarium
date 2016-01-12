@@ -45,8 +45,7 @@ switch 'simulation'                                                         % Us
                     end
                 end
             end
-            data = [khepera.myState];
-        colliders = collisionFinder( data(1:2,:) , arena.ggp );
+        colliders = collisionFinder( data );
         end
         [ arena.rho ] = findDistribution( [khepera.myState],arena );        % Agent distribution: fraction of agents in each cell
         

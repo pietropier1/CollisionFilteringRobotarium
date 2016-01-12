@@ -5,17 +5,13 @@ classdef ArenaPlot < handle
         figH;
         PAgshape;            % Agent positions plot
         PAgdir;
-        PTr;            % Agent Trajectory plot
         PCl;            % Collision spots plot
         PHeL;
         PGl;
         PAgHero;
         MMvie = [];
-        trajct;
-        plotTailBuffer = 14;    % lenght of the tail path trace
-        frameIndex = 0; 
-        PslcCell;           % patch for highlight estimated cell
-        hero;           % main character agent
+        PslcCell;               % patch for highlight estimated cell
+        hero;                   % Agent selected for plotting result (green agent)
     end
     
     properties (Constant)
@@ -24,7 +20,7 @@ classdef ArenaPlot < handle
     
     methods % constructor
         function arenaPlot = ArenaPlot(position,arena,agent)
-            arenaPlot.hero = arena.agSel;
+            arenaPlot.hero = arena.agSel;                       
             arenaPlot.figH = figure();
             switch position
                 case 'screen'
@@ -46,8 +42,6 @@ classdef ArenaPlot < handle
             end
             arenaPlot.PslcCell =  patch(0.99*gridComp(1,1:size(arena.grid{1},2)),0.99*gridComp(2,1:size(arena.grid{1},2)),'w');
             set(arenaPlot.PslcCell,'FaceAlpha',0,'EdgeColor','g','Linewidth',3);
-            arenaPlot.trajct = 2e5.*ones(arenaPlot.plotTailBuffer,2*arena.N); % agent dummy trajectories
-            arenaPlot.PTr = plot(arenaPlot.trajct(:,1:arena.N) , arenaPlot.trajct(:,arena.N+1:end),'.','Color',[.1 .49 .63],'markersize',8);
             arenaPlot = createAgentsplot(arenaPlot,agent);
             
             if arena.makemovie
@@ -80,7 +74,8 @@ classdef ArenaPlot < handle
             arenaPlot.PAgHero = patch(repmat(xState(arenaPlot.hero),1,25) + r.*cos(linspace(0,2*pi,25)),...
                 repmat(yState(arenaPlot.hero),1,25) + r.*sin(linspace(0,2*pi,25)),'g'); hold on
             set(arenaPlot.PAgHero,'FaceColor',[0.3,0.8,0.3],'Facelighting','flat','EdgeColor','k','LineWidth',2);
-            arenaPlot.PGl = plot(agent(arenaPlot.hero).goal(1),agent(arenaPlot.hero).goal(2),'g*');
+            % plot selected agent goal
+            %arenaPlot.PGl = plot(agent(arenaPlot.hero).goal(1),agent(arenaPlot.hero).goal(2),'g*');
 
             % create heading indicator
             arenaPlot.PHeL = plot([xState; xState+1.2*r.*cos(tState)] , [yState; yState+1.2*r.*sin(tState)],'k','linewidth',2);
@@ -93,16 +88,6 @@ classdef ArenaPlot < handle
         function updatePlot(arenaPlot,arena,agent,collCoords)  
             
             set(arenaPlot.figH,'name',strcat('Simulation at',' ',num2str(agent(1).time)))
-            if arenaPlot.frameIndex == arenaPlot.plotTailBuffer; 
-                arenaPlot.frameIndex = 0; 
-            end
-            arenaPlot.frameIndex = arenaPlot.frameIndex+1;
-            
-            robStates = [agent.myState];
-            %arenaPlot.trajct(arenaPlot.frameIndex,:) = [robStates(1,:), robStates(2,:)];  % build trajecotries for plotting            
-            %set(arenaPlot.PTr,'xdata',reshape(arenaPlot.trajct(:,1:arena.N),[arenaPlot.plotTailBuffer*arena.N,1]),...
-            %              'ydata',reshape(arenaPlot.trajct(:,arena.N+1:end),[arenaPlot.plotTailBuffer*arena.N,1]));
-            
             arenaPlot = updateAgentsplot(arenaPlot,agent,collCoords);
             
             highLgt = agent(arenaPlot.hero).estimate;
@@ -123,15 +108,19 @@ classdef ArenaPlot < handle
             set(arenaPlot.PAgshape,'xdata',repmat(robStates(1,:),25,1) + r.*cos(p),'ydata',...
                 repmat(robStates(2,:),25,1) + r.*sin(p));
             
+            % ====== Plot Collisions =========
             collxy = 1e5*ones(2,N);
             collxy(:,1:size(collCoords,2)) = collCoords;
             % update collision points
             set(arenaPlot.PCl,'xdata',repmat(collxy(1,:),25,1) + 1.5.*r.*cos(p),'ydata',...
                 repmat(collxy(2,:),25,1) + 1.5.*r.*sin(p));
+            % =================================
+            
             % update hero position
             set(arenaPlot.PAgHero,'xdata',repmat(robStates(1,arenaPlot.hero),1,25) + r.*cos(linspace(0,2*pi,25)),'ydata',...
                 repmat(robStates(2,arenaPlot.hero),1,25) + r.*sin(linspace(0,2*pi,25)));
-            set(arenaPlot.PGl,'xdata',agent(arenaPlot.hero).goal(1),'ydata',agent(arenaPlot.hero).goal(2));
+            % plot selected agent goal
+            %set(arenaPlot.PGl,'xdata',agent(arenaPlot.hero).goal(1),'ydata',agent(arenaPlot.hero).goal(2));
             % update heading indicators
             set(arenaPlot.PHeL,{'xdata'},num2cell([robStates(1,:); robStates(1,:)+1.2*r.*cos(robStates(3,:))]',2),...
                                {'ydata'},num2cell([robStates(2,:); robStates(2,:)+1.2*r.*sin(robStates(3,:))]',2));

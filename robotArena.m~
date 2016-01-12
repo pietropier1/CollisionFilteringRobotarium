@@ -89,13 +89,14 @@ function [collCoords,new_goal] = evaluateCollisions(arena,data,agent)
     N = arena.N;
     collisionInAgents = zeros(1,N);             % initialize collision vector --> i-th element = 1 if i-th agent experiances collisions, 0 o/w
     new_goal = [agent.goal];                    % initialize new goals as old goals  
-    [colliders,collided] = collisionFinder( data , agent(1).rcoll);
-         
+    
+    DD = pdist2(data',data');                   % euclidian distance which between each point in data
+    DD = DD + diag(1e2*ones(1,N));              % filter diagonal elements adding dummy values
+    [colliders,collided] = ind2sub([N,N],find(DD < 1.05*2*agent(1).rcoll));      % couples of agents whose ditance is below robot diameter (1.05: tollerance coefficient)
     if ~isempty(colliders)
-%         setColl_unord = [colliders,collided];               
-%         [x,ilx] = unique(setColl_unord(:,1));                   % sort and consider only one collision for each agent
-%         setColl = [x,setColl_unord(ilx,2)];                     % ordered set of "colliders-collided"
-        setColl = colliders;
+        setColl_unord = [colliders,collided];               
+        [x,ilx] = unique(setColl_unord(:,1));                   % sort and consider only one collision for each agent
+        setColl = [x,setColl_unord(ilx,2)];                     % ordered set of "colliders-collided"
         goal = [agent(x).goal];                                 % initialize vector for new goal to assign to colliding agents
         for idx = 1:size(setColl,1)                             % index running from 1 to # of agents in collision
             if agent(setColl(idx,1)).loms == 0                  % if agent where not in a collision already

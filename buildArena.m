@@ -1,5 +1,10 @@
 function [ arena,InitConf ] = buildArena( type,arena )
-% build arena features
+% build arena features: different choices are listed below
+
+% arena.grid{i} => grid coordinates of i^th cell
+% arena.Grid{i} => grid coordinates of reduced size i^th cell. Agents goals are assigned within these smaller cells;
+%                   this prevents them from going outside the cell perimeter
+
 switch type
     
     case '4blocks'
@@ -78,9 +83,9 @@ switch type
         arena.grid{1} = [-l/4,3/5*l/2,l/2,l/2; h/2,h/2,h/4,-h/2];
         arena.grid{2} = [-l/8,l/4,l/2,-l/2;(2/3*h)/(l/2)*(l/2-l/8)-h/2,-h/6,-h/2,-h/2];
         arena.grid{3} = [-l/4,0,-l/2,-l/2; h/2,h/6,-h/2,h/4];
-        arena.Grid{1} = dilationPoly(arena.grid{1},arena.ggp);
-        arena.Grid{2} = dilationPoly(arena.grid{2},arena.ggp);
-        arena.Grid{3} = dilationPoly(arena.grid{3},arena.ggp);
+        arena.Grid{1} = dilationPoly(arena.grid{1},1.1*arena.ggp);
+        arena.Grid{2} = dilationPoly(arena.grid{2},1.1*arena.ggp);
+        arena.Grid{3} = dilationPoly(arena.grid{3},1.1*arena.ggp);
         InitConf{1} = [1];
         InitConf{2} = [2 3];
         InitConf{3} = [4 5 6];

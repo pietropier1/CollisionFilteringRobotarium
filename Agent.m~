@@ -130,10 +130,10 @@ classdef Agent < handle
                     v = 0;
                 end
                 
-                % if the new goal from collision is not in current cell assign an alternative one but go there slowly
+                % if the new goal from collision is not in current cell assign a new one but wait
                 if ~inpolygon(new_goal(1,1),new_goal(2,1),agent.grid{agent.cell}(1,:),agent.grid{agent.cell}(2,:)); 
                     new_goal = randInPoly(agent.Grid{agent.cell});
-                    agent.flagSlow = 20;                % when alternative goal is assigned a lower gain is assigned, allowing for the collided neighbor to move first.
+                    agent.flagSlow = 10;
                 end
                 agent.goal = new_goal;
                 agent.cell = findCell(agent,agent.goal);
@@ -193,9 +193,9 @@ classdef Agent < handle
             agent.err2goal = error;
             E = E + error;
             % PI Controller
-            kp = 3*agent.dt;
-            if agent.flagSlow > 0; kp = kp/10; end % reduce p gain when alternative goal has been assigned after collision
-            ki = 0.005*agent.dt;
+            switch agent.flagSlow
+                case 
+            kp = 3*agent.dt; ki = 0.005*agent.dt;
             w = (kp*error + ki*E) / agent.dt;         
         end
         
