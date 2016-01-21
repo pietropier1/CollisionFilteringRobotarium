@@ -92,18 +92,19 @@ function [collCoords,new_goal] = evaluateCollisions(arena,data,agent)
     [colliders,collided] = collisionFinder( data , agent(1).rcoll);
          
     if ~isempty(colliders)
-%         setColl_unord = [colliders,collided];               
-%         [x,ilx] = unique(setColl_unord(:,1));                   % sort and consider only one collision for each agent
-%         setColl = [x,setColl_unord(ilx,2)];                     % ordered set of "colliders-collided"
-        setColl = colliders;
+        setColl_unord = [colliders,collided];               
+        [x,ilx] = unique(setColl_unord(:,1));                   % sort and consider only one collision for each agent
+        setColl = [x,setColl_unord(ilx,2)];                     % ordered set of "colliders-collided"
+        %setColl = colliders;
         goal = [agent(x).goal];                                 % initialize vector for new goal to assign to colliding agents
         for idx = 1:size(setColl,1)                             % index running from 1 to # of agents in collision
             if agent(setColl(idx,1)).loms == 0                  % if agent where not in a collision already
                 agent(setColl(idx,1)).loms = 1;                 % set agent collision flag to true
                 addCollisions(agent(setColl(idx,1)),1);         % add a collision to the number of collisions agent has registered
-                % Assign new goal: new goal located at -0.1 along current heading (backward)
-                goal(:,idx) = [agent(setColl(idx,1)).myState(1) - 0.1*cos(agent(setColl(idx,1)).myState(3));
-                               agent(setColl(idx,1)).myState(2) - 0.1*sin(agent(setColl(idx,1)).myState(3))];
+                % New goal located at -0.1 along current heading (backward)
+                goal(:,idx) = [agent(setColl(idx,1)).myState(1) - 0.05*cos(agent(setColl(idx,1)).myState(3));
+                               agent(setColl(idx,1)).myState(2) - 0.05*sin(agent(setColl(idx,1)).myState(3))];       
+   
                 collisionInAgents(setColl(idx,1)) = 1;
             end
         end
@@ -120,7 +121,7 @@ function [collCoords,new_goal] = evaluateCollisions(arena,data,agent)
         for nn = 1:N; agent(nn).loms = 0; end
     end
 
-    collCoords = [data(1,collisionInAgents>0) ; data(2,collisionInAgents>0)];   % list of collision positions for red marks in plot
+    collCoords = [data(1,collisionInAgents>0) ; data(2,collisionInAgents>0)];   % list of positions of colliding agent (used for red marks in the plot)
     
 end
 

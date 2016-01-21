@@ -83,12 +83,12 @@ switch type
         arena.grid{1} = [-l/4,3/5*l/2,l/2,l/2; h/2,h/2,h/4,-h/2];
         arena.grid{2} = [-l/8,l/4,l/2,-l/2;(2/3*h)/(l/2)*(l/2-l/8)-h/2,-h/6,-h/2,-h/2];
         arena.grid{3} = [-l/4,0,-l/2,-l/2; h/2,h/6,-h/2,h/4];
-        arena.Grid{1} = dilationPoly(arena.grid{1},1.1*arena.ggp);
-        arena.Grid{2} = dilationPoly(arena.grid{2},1.1*arena.ggp);
-        arena.Grid{3} = dilationPoly(arena.grid{3},1.1*arena.ggp);
+        arena.Grid{1} = dilationPoly(arena.grid{1},1.2*arena.ggp);
+        arena.Grid{2} = dilationPoly(arena.grid{2},1.2*arena.ggp);
+        arena.Grid{3} = dilationPoly(arena.grid{3},1.2*arena.ggp);
         InitConf{1} = [1];
         InitConf{2} = [2 3];
-        InitConf{3} = [4 5 6];
+        InitConf{3} = [];
         arena.M = eye(arena.cellNumber,arena.cellNumber);
 end
 

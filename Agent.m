@@ -25,7 +25,6 @@ classdef Agent < handle
     end
     
     properties (Access = private)
-        flagSlow = 0;                       % delay agent respone when resolving collision
         plotindex;                          % index for continuous plot
         plotHandle;                         % plot handle for agent actual position
         plotHandle2;                        % plot handle for marker
@@ -43,7 +42,7 @@ classdef Agent < handle
         wMax = 2;                           % max angular velocity
         lenStory = 1000;                    % length of continuous plot
         measureWindow = 50;                 % collision observation window time length
-        speed = 0.06;                       % linear velocity
+        speed = 0.04;                       % linear velocity
     end
     
     properties(Dependent)
@@ -112,28 +111,26 @@ classdef Agent < handle
             dist2goal = sqrt( (agent.myState(1)-agent.goal(1)).^2 + (agent.myState(2)-agent.goal(2)).^2 );
             v = agent.speed;   
             
-            % ======== Check on new cell =========
-            if newcell == agent.cell
+            % ======== Cell Check and Goal Assignment =========
+            if newcell == agent.cell                                        % cell is not changed
                 if dist2goal < agent.rcoll; 
                     agent.goal = randInPoly(agent.Grid{newcell});
                 end      
-            else
+            else                                                            % cell is changed 
                 agent.goal = randInPoly(agent.Grid{newcell});
-                agent.cell = newcell;           % agent considered in new cell even if not there yet
+                agent.cell = newcell;                                       % agent are considered inside the new cell even if not there yet
             end 
-
-            if agent.flagSlow > 0; agent.flagSlow = agent.flagSlow - 1; end
-            % ====== Check collision flag =========
+            
+            % ======== Check collision flag ==============
             if agent.loms == 1 
-                % if in collision and not on right heading yet do not move
+                % if in collision and not on right heading yet set speed to 0
                 if abs(agent.err2goal) > 0.4 
                     v = 0;
                 end
                 
                 % if the new goal from collision is not in current cell assign an alternative one but go there slowly
-                if ~inpolygon(new_goal(1,1),new_goal(2,1),agent.grid{agent.cell}(1,:),agent.grid{agent.cell}(2,:)); 
+                if ~inpolygon(new_goal(1,1),new_goal(2,1),agent.Grid{agent.cell}(1,:),agent.Grid{agent.cell}(2,:)); 
                     new_goal = randInPoly(agent.Grid{agent.cell});
-                    agent.flagSlow = 20;                % when alternative goal is assigned a lower gain is assigned, allowing for the collided neighbor to move first.
                 end
                 agent.goal = new_goal;
                 agent.cell = findCell(agent,agent.goal);
@@ -192,10 +189,9 @@ classdef Agent < handle
             error = deg2rad(derr(which));
             agent.err2goal = error;
             E = E + error;
-            % PI Controller
-            kp = 3*agent.dt;
-            if agent.flagSlow > 0; kp = kp/10; end % reduce p gain when alternative goal has been assigned after collision
-            ki = 0.005*agent.dt;
+            % ============ PI Controller ===============
+            kp = 4*agent.dt;
+            ki = 0.05*agent.dt;
             w = (kp*error + ki*E) / agent.dt;         
         end
         
