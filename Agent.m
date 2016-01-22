@@ -113,8 +113,8 @@ classdef Agent < handle
             
             % ======== Cell Check and Goal Assignment =========
             if newcell == agent.cell                                        % cell is not changed
-                if dist2goal < agent.rcoll; 
-                    agent.goal = randInPoly(agent.Grid{newcell});
+                if dist2goal <= 0.02; 
+                    agent.goal = randInPoly(agent.Grid{agent.cell});
                 end      
             else                                                            % cell is changed 
                 agent.goal = randInPoly(agent.Grid{newcell});
@@ -123,15 +123,19 @@ classdef Agent < handle
             
             % ======== Check collision flag ==============
             if agent.loms == 1 
+                
+                % if the new goal from collision is not inside the current cell assign an alternative one
+                if ~inpolygon(new_goal(1,1),new_goal(2,1),agent.Grid{agent.cell}(1,:),agent.Grid{agent.cell}(2,:)); 
+                    rdn = 0.05 -0.1.*rand(1,1);
+                    new_goal = [agent.myState(1) - 0.01*cos(agent.myState(3)+rdn);
+                                agent.myState(2) - 0.01*sin(agent.myState(3)+rdn)];
+                    %new_goal = randInPoly(agent.Grid{agent.cell});
+                end
                 % if in collision and not on right heading yet set speed to 0
                 if abs(agent.err2goal) > 0.4 
                     v = 0;
                 end
                 
-                % if the new goal from collision is not in current cell assign an alternative one but go there slowly
-                if ~inpolygon(new_goal(1,1),new_goal(2,1),agent.Grid{agent.cell}(1,:),agent.Grid{agent.cell}(2,:)); 
-                    new_goal = randInPoly(agent.Grid{agent.cell});
-                end
                 agent.goal = new_goal;
                 agent.cell = findCell(agent,agent.goal);
             end  

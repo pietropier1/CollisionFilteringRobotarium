@@ -53,9 +53,10 @@ switch 'simulation'                                                         % Us
         if size(arena.M) ~= arena.cellNumber; error('Error MM size!'); end  % Check MM size
         optitrackClient = OptitrackSimulator();                             % Create fake stream machine
         pause(0.001)
-        % ========= Run Simulation =============
-        robotArena(arena,optitrackClient,khepera);                      
         
+        
+        % ========= Run Simulation =============
+        robotArena(arena,optitrackClient,khepera);                     
         
     case 'experiment'                                                       % Use this when running experiments
 

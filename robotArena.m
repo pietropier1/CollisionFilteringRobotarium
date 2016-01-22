@@ -33,9 +33,14 @@ switch type
     case 'sim'
         while ishandle(S.fh) 
             data = OSupdate(r,khepera);                                         % pull new robot data
+            %[ arena.rho ] = findDistribution( [khepera.myState],arena );        % Agent distribution: fraction of agents in each cell
             [collCoords,new_goal] = evaluateCollisions(arena,data(1:2,:),agent);% evaluate collision coordinates and new computed goals
 
-            for aa = 1:arena.N                                  
+%             for aa = 2:3
+%             agent(aa).loms,agent(aa).goal
+%             end
+%             pause
+            for aa = 1:arena.N
                 [V,W] = controller(agent(aa),data(:,aa),new_goal(:,aa));        % compute agent controls
                 updateDynamics(khepera(aa),V,W);                                % send control command to robots
             end
@@ -86,6 +91,8 @@ function [collCoords,new_goal] = evaluateCollisions(arena,data,agent)
     % this function creates the list of agents experiencing a collision. Collisions are resolved creating a list of new
     % checkpoints (goal). Checkpoints are unchanged for those agents not experiencing a collision
 
+    
+    
     N = arena.N;
     collisionInAgents = zeros(1,N);             % initialize collision vector --> i-th element = 1 if i-th agent experiances collisions, 0 o/w
     new_goal = [agent.goal];                    % initialize new goals as old goals  
@@ -102,8 +109,9 @@ function [collCoords,new_goal] = evaluateCollisions(arena,data,agent)
                 agent(setColl(idx,1)).loms = 1;                 % set agent collision flag to true
                 addCollisions(agent(setColl(idx,1)),1);         % add a collision to the number of collisions agent has registered
                 % New goal located at -0.1 along current heading (backward)
-                goal(:,idx) = [agent(setColl(idx,1)).myState(1) - 0.05*cos(agent(setColl(idx,1)).myState(3));
-                               agent(setColl(idx,1)).myState(2) - 0.05*sin(agent(setColl(idx,1)).myState(3))];       
+                rdn = 0.05 -0.1.*rand(1,1);
+                goal(:,idx) = [agent(setColl(idx,1)).myState(1) - 1.2*arena.ggp*cos(agent(setColl(idx,1)).myState(3) + rdn);
+                               agent(setColl(idx,1)).myState(2) - 1.2*arena.ggp*sin(agent(setColl(idx,1)).myState(3) + rdn)];       
    
                 collisionInAgents(setColl(idx,1)) = 1;
             end

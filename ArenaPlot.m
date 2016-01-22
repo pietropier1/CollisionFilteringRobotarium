@@ -8,6 +8,7 @@ classdef ArenaPlot < handle
         PCl;            % Collision spots plot
         PHeL;
         PGl;
+        PGl2;
         PAgHero;
         MMvie = [];
         PslcCell;               % patch for highlight estimated cell
@@ -75,8 +76,8 @@ classdef ArenaPlot < handle
                 repmat(yState(arenaPlot.hero),1,25) + r.*sin(linspace(0,2*pi,25)),'g'); hold on
             set(arenaPlot.PAgHero,'FaceColor',[0.3,0.8,0.3],'Facelighting','flat','EdgeColor','k','LineWidth',2);
             % plot selected agent goal
-            %arenaPlot.PGl = plot(agent(arenaPlot.hero).goal(1),agent(arenaPlot.hero).goal(2),'g*');
-
+            arenaPlot.PGl = plot(agent(arenaPlot.hero).goal(1),agent(arenaPlot.hero).goal(2),'g*');
+            arenaPlot.PGl2 = plot(agent(3).goal(1),agent(3).goal(2),'k*');
             % create heading indicator
             arenaPlot.PHeL = plot([xState; xState+1.2*r.*cos(tState)] , [yState; yState+1.2*r.*sin(tState)],'k','linewidth',2);
         end
@@ -120,7 +121,8 @@ classdef ArenaPlot < handle
             set(arenaPlot.PAgHero,'xdata',repmat(robStates(1,arenaPlot.hero),1,25) + r.*cos(linspace(0,2*pi,25)),'ydata',...
                 repmat(robStates(2,arenaPlot.hero),1,25) + r.*sin(linspace(0,2*pi,25)));
             % plot selected agent goal
-            %set(arenaPlot.PGl,'xdata',agent(arenaPlot.hero).goal(1),'ydata',agent(arenaPlot.hero).goal(2));
+            set(arenaPlot.PGl,'xdata',agent(arenaPlot.hero).goal(1),'ydata',agent(arenaPlot.hero).goal(2));
+            set(arenaPlot.PGl2,'xdata',agent(3).goal(1),'ydata',agent(3).goal(2));
             % update heading indicators
             set(arenaPlot.PHeL,{'xdata'},num2cell([robStates(1,:); robStates(1,:)+1.2*r.*cos(robStates(3,:))]',2),...
                                {'ydata'},num2cell([robStates(2,:); robStates(2,:)+1.2*r.*sin(robStates(3,:))]',2));
