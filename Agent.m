@@ -21,7 +21,8 @@ classdef Agent < handle
         measureTime = 0;                    % time counter    
         time = 0;                           % simulation running time
         cell_story = [];                    % cell movements progression
-        estimateStory = [];                 % estimate progression         
+        estimateStory = [];                 % estimate progression  
+        waitingTime;                   % number of step to wait before start moving again
     end
     
     properties (Access = private)
@@ -41,12 +42,14 @@ classdef Agent < handle
     properties(Constant)
         wMax = 2;                           % max angular velocity
         lenStory = 1000;                    % length of continuous plot
-        measureWindow = 50;                 % collision observation window time length
+        measureWindow = 15;                 % collision observation window time length
         speed = 0.04;                       % linear velocity
+        headindsTollerance = 0.4;           % tollerance in headings measure
     end
     
     properties(Dependent)
         dlt;
+        distanceTollerance;
     end
       
     % ======= Constructor =========
@@ -94,26 +97,54 @@ classdef Agent < handle
         
         function dlt = get.dlt(agent)          
             dlt = agent.rcoll^2*pi;
-        end     
+        end    
+        
+        function distanceTollerance = get.distanceTollerance(agent)          
+            distanceTollerance = agent.rcoll .* 0.9;
+        end  
+        
     end
     
     methods
                 
         function [v,w] = controller(agent,data,new_goal) 
             % update robot information
-            agent.time = agent.time + agent.dt;
-            agent.myState = data;
-            agent.measureTime = agent.measureTime + agent.dt; 
+            agent.time = agent.time + agent.dt;                                                 % update global timer
+            agent.myState = data;                                                               % update robot state
+            agent.measureTime = agent.measureTime + agent.dt;                                   % update collision filter timer
            
             % compute new cell for agent accordingly to M matrix probability distribution
-            newcell = find( cumsum(agent.M(:,agent.cell)) > random('unif',0,1), 1 , 'first' );
+            newcell = find( cumsum(agent.M(:,agent.cell)) > random('unif',0,1), 1 , 'first' );  % compute new cell
             
             dist2goal = sqrt( (agent.myState(1)-agent.goal(1)).^2 + (agent.myState(2)-agent.goal(2)).^2 );
             v = agent.speed;   
             
+            % ======== Check collision flag ==============
+            if agent.loms == 1 
+                
+                % if the new goal from collision is not inside the current cell assign try alternative one
+                if ~inpolygon(new_goal(1,1),new_goal(2,1),agent.Grid{agent.cell}(1,:),agent.Grid{agent.cell}(2,:)); 
+                    agent.waitingTime = 75;
+                    new_goal = randInPoly(agent.Grid{agent.cell});
+                    %display('alternative goal!');
+                end
+                % if in collision and not on right heading yet set speed to 0
+                if abs(agent.err2goal) > agent.headindsTollerance && dist2goal > agent.distanceTollerance
+                    v = 0;
+                end
+                
+                agent.goal = new_goal;
+                agent.cell = findCell(agent,agent.goal);
+            end
+            
+            %if v ~= 0; agent.loms = 0; end
+            
+            w = PID(agent);
+            if abs(w) > agent.wMax; w = agent.wMax*w/abs(w); end % max ang.vel. limit 
+            
             % ======== Cell Check and Goal Assignment =========
             if newcell == agent.cell                                        % cell is not changed
-                if dist2goal <= 0.02; 
+                if dist2goal <= agent.distanceTollerance; 
                     agent.goal = randInPoly(agent.Grid{agent.cell});
                 end      
             else                                                            % cell is changed 
@@ -121,26 +152,8 @@ classdef Agent < handle
                 agent.cell = newcell;                                       % agent are considered inside the new cell even if not there yet
             end 
             
-            % ======== Check collision flag ==============
-            if agent.loms == 1 
-                
-                % if the new goal from collision is not inside the current cell assign an alternative one
-                if ~inpolygon(new_goal(1,1),new_goal(2,1),agent.Grid{agent.cell}(1,:),agent.Grid{agent.cell}(2,:)); 
-                    rdn = 0.05 -0.1.*rand(1,1);
-                    new_goal = [agent.myState(1) - 0.01*cos(agent.myState(3)+rdn);
-                                agent.myState(2) - 0.01*sin(agent.myState(3)+rdn)];
-                    %new_goal = randInPoly(agent.Grid{agent.cell});
-                end
-                % if in collision and not on right heading yet set speed to 0
-                if abs(agent.err2goal) > 0.4 
-                    v = 0;
-                end
-                
-                agent.goal = new_goal;
-                agent.cell = findCell(agent,agent.goal);
-            end  
-            w = PID(agent);
-            if abs(w) > agent.wMax; w = agent.wMax*w/abs(w); end % max ang.vel. limit 
+            % if in wait mode set v = 0
+            if agent.waitingTime > 0; v = 0; agent.waitingTime = agent.waitingTime - 1; end
             
             % ============ Run Collision Filter =============
             if mod(round(agent.measureTime,2),agent.measureWindow*agent.dt) == 0
@@ -194,8 +207,8 @@ classdef Agent < handle
             agent.err2goal = error;
             E = E + error;
             % ============ PI Controller ===============
-            kp = 4*agent.dt;
-            ki = 0.05*agent.dt;
+            kp = 5*agent.dt;
+            ki = 0.000005*agent.dt;
             w = (kp*error + ki*E) / agent.dt;         
         end
         

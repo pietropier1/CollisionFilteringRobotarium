@@ -38,10 +38,10 @@ switch 'simulation'                                                         % Us
         % ==== Initialize virtual robots ======  
         colliders = 1;
         while ~isempty(colliders)                                           % avoid collision at initial time
-            for cell = 1:arena.cellNumber
-                if ~isempty( InitConf{cell} )
-                    for kID = InitConf{cell}
-                        khepera(kID) = Khepera(kID,cell,arena);                 % Physical agent
+            for cellID = 1:arena.cellNumber
+                if ~isempty( InitConf{cellID} )
+                    for kID = InitConf{cellID}
+                        khepera(kID) = Khepera(kID,cellID,arena);                 % Physical agent
                     end
                 end
             end
@@ -79,3 +79,15 @@ switch 'simulation'                                                         % Us
         robotArena(arena,r);
         
 end
+
+
+
+
+
+% ========= P coefficints
+% arena.Grid{1} = dilationPoly(arena.grid{1},1.2*arena.ggp); (buildArena)
+% [colliders,collided] = ind2sub([N,N],find(DD <= 2*rPZ*1.1)); (collisionFinder)
+% new_goal = [agent.myState(1) - 0.01*cos(agent.myState(3)+rdn); (agent/alternaive goal)
+% goal(:,idx) = [agent(setColl(idx,1)).myState(1) - 1.2*arena.ggp*cos(agent(setColl(idx,1)).myState(3) + rdn); (robotArena / evaluateCollison)
+% distanceTollerance = agent.rcoll .* 0.9;  (agent get.distanceTollerance)
+%

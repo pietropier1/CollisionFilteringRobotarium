@@ -9,6 +9,7 @@ function [ rho ] = findDistribution( poses,arena )
 
 N = size(poses,2);
 rho = zeros(arena.cellNumber,1);
+%cellOccupiers = cell(arena.cellNumber,1);                       % ID of agent occuping each cell
 
 for nn = 1:N
     ci = 0;
@@ -19,7 +20,8 @@ for nn = 1:N
             error('No cell found for one or more agents!'); 
         end          
         ci = inpolygon(poses(1,nn),poses(2,nn),arena.grid{agentisincell}(1,:),arena.grid{agentisincell}(2,:));         
-    end  
+    end 
+    %cellOccupiers{agentisincell}(end+1) = nn;
     rho(agentisincell) = rho(agentisincell) + 1;
 
 
