@@ -117,25 +117,22 @@ classdef Agent < handle
             agent.myState = data;                                                               % update robot state
             dist2goal = sqrt( (agent.myState(1)-agent.goal(1,1)).^2 + (agent.myState(2)-agent.goal(2,1)).^2 );
             v = agent.speed;                                                                    % initialize v to cruise speed
-            agent.cell = findCell(agent,agent.myState(1:2,1));
+            agent.cell = findCell(agent,agent.goal(:,1));
            
             % compute new cell for agent accordingly to M matrix probability distribution
             if mod(round(agent.time,2),agent.cellDwell*agent.dt) == 0
                 newcell = find( cumsum(agent.M(:,agent.cell)) > random('unif',0,1), 1 , 'first' );  % compute new cell  
                 %agent.cell = newcell;                                       % agent are considered inside the new cell even if not there yet
                 if newcell ~= agent.cell
-                    agent.goal = zeros(2,2);
+                    agent
                     agent.goal(:,1) = randOnInterface(agent);
                     agent.goal(:,2) = randInPoly(agent.Grid{newcell});
-                    agent.goal,pause
                 end
             end  
 
             if dist2goal <= agent.distanceTollerance;
                agent.goal(:,1) = agent.goal(:,2); 
                agent.goal(:,2) = randInPoly(agent.Grid{agent.cell});
-               agent.myState
-               display(['Goal reached - new assignment in cell: ',num2str(agent.cell)])
             end
             
             % ======== Check if in Collision ==============

@@ -1,7 +1,7 @@
 function [P] = initHMM(arena)
 
 M = arena.cellNumber;
-eps=min(arena.Dlt)*0.95;
+eps=min(arena.Dlt)*0.98;
 
 D=arena.Dlt';
 % mubar=1/M.*ones(M,1);

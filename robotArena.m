@@ -42,6 +42,7 @@ switch type
                 [V,W] = controller(agent(aa),data(:,aa),new_goal(:,aa));        % compute agent controls
                 updateDynamics(khepera(aa),V,W);                                % send control command to robots
             end
+            agent(1).goal
             updatePlot(screenPlot,arena,agent,collCoords);                      % update plot
             pause(0.01); drawnow;
         end
@@ -85,27 +86,32 @@ end
 
 
 function [collCoords,new_goal] = evaluateCollisionsBETA(arena,data,agent)
-    
+% Evaluate clusters of agent in collision and compute new goals 
+% collCoords --> coordinates of agents in collision (used only for plot purposes)
+% new_goal --> new goals for each agent --> goals for agents not experiencing a new collision are unchanged
+
 persistent old_clusters; if isempty(old_clusters); old_clusters{1} = 0; end
 N = arena.N;
-collisionInAgents = zeros(1,N);             % initialize collision vector --> i-th element = 1 if i-th agent experiances collisions, 0 o/w
-new_goal = [agent.goal];                    % initialize new goals as old goals  
-[~,~,clusters] = collisionFinder( data , arena.ggp );
-for cluster_ID = 1:numel(clusters)
+new_goal = [agent.goal];                                % initialize new goals as old goals  
+new_goal = new_goal(:,1:2:end);                         % consider only the first goal
+[~,~,clusters] = collisionFinder( data , arena.ggp );   % clusters of agents in collision
+for cluster_ID = 1:numel(clusters)                      % for each cluster
     clu = clusters{cluster_ID};
-    if ~matchCells(clu,old_clusters)        % if clu did not already existed 
-        xcg = sum(data(1,clu))./size(clu,2);                              % center of collision x-coord 
-        ycg = sum(data(2,clu))./size(clu,2);                              % center of collision y-coord
+    if ~matchCells(clu,old_clusters)                    % if clu did not already existed in old_clusters 
+        xcg = sum(data(1,clu))./size(clu,2);            % center of mass of collision (x-coord) 
+        ycg = sum(data(2,clu))./size(clu,2);            % center of mass of collision (y-coord)
 
-        for aa = clu %(REMOVE THIS FOR CYCLE!!!)
-            agent(aa).loms = 1;                 % set agent collision flag to true
-            addCollisions(agent(aa),1);         % add a collision to the number of collisions agent has registered
-            new_heading = atan2( (agent(aa).myState(2)-ycg) , (agent(aa).myState(1)-xcg) );
-            new_goal(:,aa) = [agent(aa).myState(1) + 1.1*arena.ggp*cos(new_heading);
-                              agent(aa).myState(2) + 1.1*arena.ggp*sin(new_heading)];        
-            collisionInAgents(aa) = 1;
+        for aa = clu                                    % for each agent in the cluster
+            agent(aa).loms = 1;                         % set agent collision flag to true
+            addCollisions(agent(aa),1);                 % add a collision to the number of collisions agent has registered
         end
+        new_heading = atan2( (data(2,clu)-ycg) , (data(1,clu)-xcg) );
+        new_goal(:,clu) = [data(1,clu) + 1.1*arena.ggp.*cos(new_heading);
+                           data(2,clu) + 1.1*arena.ggp.*sin(new_heading)];   
     end
+    
+    % Add: if agents in the clusters have waiting time > 0, make sure they dont collide once they start moving
+    
 end
 
 agentInCollision = sort([clusters{:}]);
@@ -116,8 +122,13 @@ end
 
 old_clusters = clusters;
 collCoords = [data(1,agentInCollision) ; data(2,agentInCollision)];   % list of positions of colliding agent (used for red marks in the plot)
-%pause  
+
 end
+
+
+
+
+
 
     
     
