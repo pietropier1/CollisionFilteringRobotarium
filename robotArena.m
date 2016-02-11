@@ -42,7 +42,6 @@ switch type
                 [V,W] = controller(agent(aa),data(:,aa),new_goal(:,aa));        % compute agent controls
                 updateDynamics(khepera(aa),V,W);                                % send control command to robots
             end
-            agent(1).goal
             updatePlot(screenPlot,arena,agent,collCoords);                      % update plot
             pause(0.01); drawnow;
         end

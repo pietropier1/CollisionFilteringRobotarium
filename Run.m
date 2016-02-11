@@ -11,7 +11,7 @@
 
 clc; close all; clear classes;
 arena.makemovie = false;                                                    % Record matlab plot in video 
-arena.ggp = 0.06;                                                           % Radius of robots protected area
+arena.ggp = 0.04;                                                           % Radius of robots protected area
 arena.dt = 0.05;                                                            % Simulation time step    
 arena.agSel = 1;                                                            % Select which agent's filter is plot
 

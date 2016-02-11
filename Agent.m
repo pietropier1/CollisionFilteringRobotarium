@@ -38,12 +38,13 @@ classdef Agent < handle
         goal;                               % agent coverage task checkpoint list [xg1,xg2,...;yg1,yg2,...]
         loms = 0;                           % loss of minimum separation flag
         nCollisions = 0;                    % number of collision
+        transitioning = 0;                  % cell transfer flag: 1 if agent is transfering / agent going to an interface goal
     end
     
     properties(Constant)
         wMax = 2;                           % max angular velocity
         lenStory = 1000;                    % length of continuous plot
-        measureWindow = 15;                 % period of collision registration window
+        measureWindow = 5;                 % period of collision registration window
         cellDwell = 50;                    % cell dwell time
         speed = 0.04;                       % linear velocity
         headindsTollerance = 0.4;           % tollerance in headings measure
@@ -117,31 +118,29 @@ classdef Agent < handle
             agent.myState = data;                                                               % update robot state
             dist2goal = sqrt( (agent.myState(1)-agent.goal(1,1)).^2 + (agent.myState(2)-agent.goal(2,1)).^2 );
             v = agent.speed;                                                                    % initialize v to cruise speed
-            agent.cell = findCell(agent,agent.myState(1:2,1));
+            agent.cell = findCell(agent,agent.goal(:,2));
            
-            % compute new cell for agent accordingly to M matrix probability distribution
-            if mod(round(agent.time,2),agent.cellDwell*agent.dt) == 0
+            if mod(round(agent.time,2),agent.cellDwell*agent.dt) == 0 && ~agent.transitioning
                 newcell = find( cumsum(agent.M(:,agent.cell)) > random('unif',0,1), 1 , 'first' );  % compute new cell  
-                %agent.cell = newcell;                                       % agent are considered inside the new cell even if not there yet
                 if newcell ~= agent.cell
                     agent.goal = zeros(2,2);
+                    agent.transitioning = 1;
                     agent.goal(:,1) = randOnInterface(agent);
                     agent.goal(:,2) = randInPoly(agent.Grid{newcell});
-                    agent.goal,pause
                 end
             end  
 
             if dist2goal <= agent.distanceTollerance;
+               if agent.transitioning; agent.transitioning = 0; end
                agent.goal(:,1) = agent.goal(:,2); 
                agent.goal(:,2) = randInPoly(agent.Grid{agent.cell});
-               agent.myState
-               display(['Goal reached - new assignment in cell: ',num2str(agent.cell)])
+               %display(['Goal reached - new assignment in cell: ',num2str(agent.cell)])
             end
             
             % ======== Check if in Collision ==============
             if agent.loms == 1 
                 if ~inpolygon(new_goal(1,1),new_goal(2,1),agent.Grid{agent.cell}(1,:),agent.Grid{agent.cell}(2,:));     % assign new goal if collision resolving goal is not inside the current cell
-                    agent.waitingTime = 60;
+                    agent.waitingTime = 40;
                     new_goal = randInPoly(agent.Grid{agent.cell});
                 end
 
@@ -159,7 +158,7 @@ classdef Agent < handle
             if agent.waitingTime > 0; v = 0; agent.waitingTime = agent.waitingTime - 1; end     % if in wait mode set v = 0
             
             % ============ Run Collision Filter =============
-            if mod(round(agent.measureTime,2),agent.measureWindow*agent.dt) == 0
+            if mod(round(agent.measureTime,2),agent.cellDwell*agent.dt) == 0
                 % ------------- Bayesian filter -------------
                 %agent.estimate = BayesFilter(agent);
                 % --------------------------------------
@@ -252,7 +251,7 @@ classdef Agent < handle
         end
         
         function estimate = VITfilter(agent)
-            agent.rho = agent.M * agent.rho;                            % update expected swarm distribution
+            %agent.rho = agent.M * agent.rho;                            % update expected swarm distribution
             if agent.nCollisions > 0                                    % choose observation matrix row
                 G = agent.rho'.*agent.DD;
             else
@@ -266,6 +265,7 @@ classdef Agent < handle
             
             agent.belief = mu./sum(mu);                                 % agent belief
             [~,estimate] = max(agent.belief);                           % argmax (belief)
+            agent.rho = agent.belief;
             
             if agent.selected == true 
                 disp('-------------')
