@@ -142,7 +142,7 @@ classdef Agent < handle
                 if ~inpolygon(new_goal(1,1),new_goal(2,1),agent.Grid{agent.cell}(1,:),agent.Grid{agent.cell}(2,:));     % assign new goal if collision resolving goal is not inside the current cell
                     agent.waitingTime = 40;
                     new_goal = randInPoly(agent.Grid{agent.cell});
-                    display(['Alternative goal asigned to agent:',num2str(agent.ID)])
+                    %display(['Alternative goal asigned to agent:',num2str(agent.ID)])
                 end
 
                 if abs(agent.err2goal) > agent.headindsTollerance && dist2goal > agent.distanceTollerance
