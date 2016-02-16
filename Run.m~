@@ -1,8 +1,6 @@
 % Main robot simulation runner
 
-% In order to use Robotarium, set below switch key to 'experiment'. 
-% Both cases in the below switch call the same robotArena.m file which starts the actual simulation. 
-% In robotArena.m experiement/simulation cases are automatically detected and no user input is requried
+% In order to use Robotarium, set switch key on line 18 to 'experiment'
 
 clc; close all; clear classes;
 arena.makemovie = false;                                                    % Record matlab plot in video 

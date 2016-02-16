@@ -1,9 +1,8 @@
 % This function runs the actual simulation. Simulation ('sim' case) or experiment ('robo' case) are automatically detected based
 % on number of inputs. Both 'sim' and 'robo' performes the same operations and call the same functions. In order:
 % 1. update robots' poses (in 'sim' case virtual agents called khepera are used)
-% 2. evaluate if some collision is occuring and compute new goals for their resolution
-% 3. compute controls for each agent and set controls to agents
-% 4. update plot
+% 2. evaluate if some collision is occuring and compute new goal f
+
 
 
 
@@ -40,8 +39,11 @@ switch type
     case 'sim'
         while ishandle(S.fh) 
             data = OSupdate(r,khepera);                                         % pull new robot data
+            %[ arena.rho , cellOccupiers ] = findDistribution( [khepera.myState],arena );        % Agent distribution: fraction of agents in each cell
             [collCoords,new_goal] = evaluateCollisions(arena,data(1:2,:),agent);% evaluate collision coordinates and new computed goals
-     
+            %[collCoords,new_goal] = evaluateCollisions_beta(arena,data(1:2,:),agent,cellOccupiers);% evaluate collision coordinates and new computed goals
+
+            
             for aa = 1:arena.N
                 [V,W] = controller(agent(aa),data(:,aa),new_goal(:,aa));        % compute agent controls
                 updateDynamics(khepera(aa),V,W);                                % send control command to robots
@@ -49,6 +51,7 @@ switch type
             updatePlot(screenPlot,arena,agent,collCoords);                      % update plot
             pause(0.01); drawnow;
         end
+        %for aa = 1:arena.N; move(khepera(aa),0,0); end                          % stop robots before return
    
     case 'robo'
         while ishandle(S.fh) 
