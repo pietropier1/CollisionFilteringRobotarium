@@ -89,9 +89,9 @@ switch type
         arena.Interface{1} = [arena.grid{2}(1,2) arena.grid{1}(1,4); arena.grid{2}(2,2) arena.grid{1}(2,4)];
         arena.Interface{2} = [arena.grid{2}(1,4) arena.grid{2}(1,1); arena.grid{2}(2,4) arena.grid{2}(2,1)];
         arena.Interface{3} = [arena.grid{1}(1,1) arena.grid{3}(1,2); arena.grid{1}(2,1) arena.grid{3}(2,2)];
-        InitConf{1} = [1];
-        InitConf{2} = [2 3];
-        InitConf{3} = [4 5 6];
+        InitConf{1} = [1 2 3];
+        InitConf{2} = [4 5];
+        InitConf{3} = [6];
         arena.M = eye(arena.cellNumber,arena.cellNumber);
 end
 

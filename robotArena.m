@@ -34,7 +34,7 @@ switch type
         while ishandle(S.fh) 
             data = OSupdate(r,khepera);                                         % pull new robot data
             %[ arena.rho , cellOccupiers ] = findDistribution( [khepera.myState],arena );        % Agent distribution: fraction of agents in each cell
-            [collCoords,new_goal] = evaluateCollisionsBETA(arena,data(1:2,:),agent);% evaluate collision coordinates and new computed goals
+            [collCoords,new_goal] = evaluateCollisions(arena,data(1:2,:),agent);% evaluate collision coordinates and new computed goals
             %[collCoords,new_goal] = evaluateCollisions_beta(arena,data(1:2,:),agent,cellOccupiers);% evaluate collision coordinates and new computed goals
 
             
@@ -84,18 +84,18 @@ end
 end
 
 
-function [collCoords,new_goal] = evaluateCollisionsBETA(arena,data,agent)
-% Evaluate clusters of agent in collision and compute new goals 
+function [collCoords,goal] = evaluateCollisions(arena,data,agent)
+% Evaluate clusters of agents in collision and compute new goals 
 % collCoords --> coordinates of agents in collision (used only for plot purposes)
-% new_goal --> new goals for each agent --> goals for agents not experiencing a new collision are unchanged
+% new_goal --> new goals for each agent (the goals for agents not experiencing a new collision are unchanged)
 
 persistent old_clusters; if isempty(old_clusters); old_clusters{1} = 0; end
 N = arena.N;
-new_goal = [agent.goal];                                % initialize new goals as old goals  
-new_goal = new_goal(:,1:2:end);                         % consider only the first goal
+goal = [agent.goal];                                    % initialize new goals as old goals  
+goal = goal(:,1:2:end);                                 % consider only the first goal
 [~,~,clusters] = collisionFinder( data , arena.ggp );   % clusters of agents in collision
 for cluster_ID = 1:numel(clusters)                      % for each cluster
-    clu = clusters{cluster_ID};
+    clu = clusters{cluster_ID};                         % agents of this cluster
     if ~matchCells(clu,old_clusters)                    % if clu did not already existed in old_clusters 
         xcg = sum(data(1,clu))./size(clu,2);            % center of mass of collision (x-coord) 
         ycg = sum(data(2,clu))./size(clu,2);            % center of mass of collision (y-coord)
@@ -105,12 +105,17 @@ for cluster_ID = 1:numel(clusters)                      % for each cluster
             addCollisions(agent(aa),1);                 % add a collision to the number of collisions agent has registered
         end
         new_heading = atan2( (data(2,clu)-ycg) , (data(1,clu)-xcg) );
-        new_goal(:,clu) = [data(1,clu) + 1.1*arena.ggp.*cos(new_heading);
-                           data(2,clu) + 1.1*arena.ggp.*sin(new_heading)];   
+        goal(:,clu) = [data(1,clu) + 1.1*arena.ggp.*cos(new_heading);
+                       data(2,clu) + 1.1*arena.ggp.*sin(new_heading)];   
     end
     
-    % Add: if agents in the clusters have waiting time > 0, make sure they dont collide once they start moving
-    
+    for ag = clu
+        if agent(ag).waitingTime > 0
+            nclu = setdiff(clu,ag);                     % set difference clu \ ag
+            conf = conflictHeadings(data(:,ag),goal(:,ag),data(:,nclu),goal(:,nclu),arena.ggp);
+            if conf; goal(:,ag) = [1e3;1e3]; end        % if there is conflict assign dummy goal outside cell                                                
+        end
+    end      
 end
 
 agentInCollision = sort([clusters{:}]);
@@ -131,53 +136,4 @@ end
 
     
     
-    function [collCoords,new_goal] = evaluateCollisions(arena,data,agent)
-    % this function creates the list of agents experiencing a collision. Collisions are resolved creating a list of new
-    % checkpoints (goal). Checkpoints are unchanged for those agents not experiencing a collision
-
-    N = arena.N;
-    collisionInAgents = zeros(1,N);             % initialize collision vector --> i-th element = 1 if i-th agent experiances collisions, 0 o/w
-    new_goal = [agent.goal];                    % initialize new goals as old goals  
-    [colliders,collided] = collisionFinder( data , arena.ggp );
-    if ~isempty(colliders)
-        setColl_unord = [colliders,collided];               
-        [x,ilx] = unique(setColl_unord(:,1));                   % sort and consider only one collision for each agent
-        setColl = [x,setColl_unord(ilx,2)];                     % ordered set of "colliders-collided"
-        %setColl = colliders;
-        %goal = [agent(x).goal];                                 % initialize vector for new goal to assign to colliding agents
-        for idx = 1:size(setColl,1)                             % index running from 1 to # of agents in collision
-            if agent(setColl(idx,1)).loms == 0                  % if agent where not in a collision already
-                agent(setColl(idx,1)).loms = 1;                 % set agent collision flag to true
-                addCollisions(agent(setColl(idx,1)),1);         % add a collision to the number of collisions agent has registered
-                % New goal located at -1.1 agent radius along current heading (backward)
-                rdn = 0.05 -0.1.*rand(1,1);
-                new_goal(:,setColl(idx,1)) = [agent(setColl(idx,1)).myState(1) - 1.1*arena.ggp*cos(agent(setColl(idx,1)).myState(3) + rdn);
-                                              agent(setColl(idx,1)).myState(2) - 1.1*arena.ggp*sin(agent(setColl(idx,1)).myState(3) + rdn)];       
-   
-                
-            end
-            collisionInAgents(setColl(idx,1)) = 1;
-        end
-        
-        notCollAgents = setdiff(1:N,x);                         % list of not colliding agents
-        if ~isempty(notCollAgents)                              % clear collision flag for non-colliding agents
-            for gg = notCollAgents; agent(gg).loms = 0; end
-        end
-
-        %new_goal(:,setColl(:,1)) = goal;                        % list of new gaol for agents listed in setColl, keep remaining unchanged
-        %collisionInAgents(x) = 1;                               % index list of agent closer than tollerance
-        
-    else
-        for nn = 1:N; agent(nn).loms = 0; end
-    end
-
-    collCoords = [data(1,collisionInAgents>0) ; data(2,collisionInAgents>0)];   % list of positions of colliding agent (used for red marks in the plot)
-    
-end
-
-
-
-
-
-
-
+ 

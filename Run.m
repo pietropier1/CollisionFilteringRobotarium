@@ -11,15 +11,15 @@
 
 clc; close all; clear classes;
 arena.makemovie = false;                                                    % Record matlab plot in video 
-arena.ggp = 0.04;                                                           % Radius of robots protected area
+arena.ggp = 0.06;                                                           % Radius of robots protected area
 arena.dt = 0.05;                                                            % Simulation time step    
-arena.agSel = 1;                                                            % Select which agent's filter is plot
+arena.agSel = 3;                                                            % Select which agent's filter is plot
 
 % ========= Build Domain Grid =============
 [arena,InitConf] = buildArena('3track',arena);                              % change first argument to change grid shape                        
 
 % ====== Compute Markov Transition Matrix =============
-arena.M = initHMM(arena);                                                  % Markov M used in track (overwrite arena.M from buildArena function).          
+%arena.M = initHMM(arena);                                                  % Markov M used in track (overwrite arena.M from buildArena function).          
 
 % ========== Select Type of Analysis =============
 switch 'simulation'                                                         % Use 'simulation' or 'experiment'

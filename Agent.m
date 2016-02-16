@@ -44,8 +44,8 @@ classdef Agent < handle
     properties(Constant)
         wMax = 2;                           % max angular velocity
         lenStory = 1000;                    % length of continuous plot
-        measureWindow = 5;                 % period of collision registration window
-        cellDwell = 50;                    % cell dwell time
+        measureWindow = 15;                 % period of collision registration window
+        cellDwell = 10;                    % cell dwell time
         speed = 0.04;                       % linear velocity
         headindsTollerance = 0.4;           % tollerance in headings measure
     end
@@ -142,6 +142,7 @@ classdef Agent < handle
                 if ~inpolygon(new_goal(1,1),new_goal(2,1),agent.Grid{agent.cell}(1,:),agent.Grid{agent.cell}(2,:));     % assign new goal if collision resolving goal is not inside the current cell
                     agent.waitingTime = 40;
                     new_goal = randInPoly(agent.Grid{agent.cell});
+                    display(['Alternative goal asigned to agent:',num2str(agent.ID)])
                 end
 
                 if abs(agent.err2goal) > agent.headindsTollerance && dist2goal > agent.distanceTollerance
@@ -251,7 +252,8 @@ classdef Agent < handle
         end
         
         function estimate = VITfilter(agent)
-            %agent.rho = agent.M * agent.rho;                            % update expected swarm distribution
+            
+            agent.rho = agent.M * agent.rho;                            % update expected swarm distribution
             if agent.nCollisions > 0                                    % choose observation matrix row
                 G = agent.rho'.*agent.DD;
             else
@@ -265,7 +267,6 @@ classdef Agent < handle
             
             agent.belief = mu./sum(mu);                                 % agent belief
             [~,estimate] = max(agent.belief);                           % argmax (belief)
-            agent.rho = agent.belief;
             
             if agent.selected == true 
                 disp('-------------')
