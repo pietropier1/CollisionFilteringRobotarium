@@ -12,10 +12,10 @@ classdef Agent < handle
         nAgents;                            % total number of agens
         Dlt;                                % Single cells area
         rcoll;                              % radius of robot area 
-        DD = [];                            % N*dlt/Dlt ratio for each cell
+        phi = [];                           % N*dlt/Dlt*mu ratio for each cell
         M;                                  % transition probability matrix
         err2goal;                           % error angle to goal
-        rho;                                % swarm real distribution
+        mu;                                 % swarm projected distribution
         estimate;                           % estimated cell for robot location
         belief;                             % agent position belief
         dt;                                 % simulation time step size
@@ -43,9 +43,9 @@ classdef Agent < handle
     
     properties(Constant)
         wMax = 2;                           % max angular velocity
-        lenStory = 1000;                    % length of continuous plot
-        measureWindow = 15;                 % period of collision registration window
-        cellDwell = 10;                    % cell dwell time
+        lenStory = 50;                      % length of continuous plot
+        measureWindow = 180;                 % period of collision registration window
+        cellDwell = 180;                    % cell dwell time
         speed = 0.04;                       % linear velocity
         headindsTollerance = 0.4;           % tollerance in headings measure
     end
@@ -74,10 +74,19 @@ classdef Agent < handle
                 agent.M = arena.M;
                 agent.dt = arena.dt;
                
-                agent.rho = arena.rho./(sum(arena.rho));
-                agent.DD = (agent.nAgents.*agent.dlt)./agent.Dlt;
-                agent.belief = agent.rho; 
+                % Viterbi Initialization
+                Ncell = arena.cellNumber;
+                agent.mu = 1/Ncell.*ones(Ncell,1);
+                agent.phi = (agent.nAgents.*agent.dlt).*inv(diag(agent.Dlt))*agent.mu;
+                G = 1-agent.phi';
+                agent.belief = zeros(Ncell,1);
+                for i=1:Ncell;
+                    mui=zeros(Ncell,1); mui(i)=agent.mu(i);
+                    agent.belief(i)=G*mui;
+                end
+                %agent.belief = G .* agent.mu; 
                 [~, agent.estimate] = max(agent.belief);
+                
                 % ====== Assign initial random goal inside current cell ===
                 agent.goal = [randInPoly(agent.Grid{agent.cell}),randInPoly(agent.Grid{agent.cell})];
                 
@@ -89,7 +98,7 @@ classdef Agent < handle
                     agent.cell_story(agent.plotindex) = agent.cell; 
                     agent.estimateStory(agent.plotindex) = agent.estimate;
                     agent.plotHandle = plot(1:agent.lenStory,agent.cell_story); hold on
-                    agent.plotHandle2 = plot(1,agent.cell,'*'); axis([0 agent.lenStory 0 4])
+                    agent.plotHandle2 = plot(1,agent.cell,'*'); axis([0 agent.lenStory 0 arena.cellNumber+1])
                     agent.plotHandle3 = plot(1:agent.lenStory,agent.estimateStory,'--');
                 end
                 
@@ -118,14 +127,19 @@ classdef Agent < handle
             agent.myState = data;                                                               % update robot state
             dist2goal = sqrt( (agent.myState(1)-agent.goal(1,1)).^2 + (agent.myState(2)-agent.goal(2,1)).^2 );
             v = agent.speed;                                                                    % initialize v to cruise speed
-            agent.cell = findCell(agent,agent.goal(:,2));
+            
+            % ==== Find Robot Cell ====
+            agent.cell = findCell(agent,agent.goal(1:2,1));
+            if agent.transitioning == 1; agent.cell = findCell(agent,agent.goal(:,2)); end
            
+            % ==== Draw a new cell and Assign Goal ======
             if mod(round(agent.time,2),agent.cellDwell*agent.dt) == 0 && ~agent.transitioning
-                newcell = find( cumsum(agent.M(:,agent.cell)) > random('unif',0,1), 1 , 'first' );  % compute new cell  
+                newcell = find( cumsum(agent.M(:,agent.cell)) > random('unif',0,1), 1 , 'first' );  % compute new cell
+                %display(['Agent',num2str(agent.ID),': new cell is:',num2str(newcell)])
                 if newcell ~= agent.cell
                     agent.goal = zeros(2,2);
                     agent.transitioning = 1;
-                    agent.goal(:,1) = randOnInterface(agent);
+                    agent.goal(:,1) = randOnInterface(agent,agent.cell);
                     agent.goal(:,2) = randInPoly(agent.Grid{newcell});
                 end
             end  
@@ -159,7 +173,7 @@ classdef Agent < handle
             if agent.waitingTime > 0; v = 0; agent.waitingTime = agent.waitingTime - 1; end     % if in wait mode set v = 0
             
             % ============ Run Collision Filter =============
-            if mod(round(agent.measureTime,2),agent.cellDwell*agent.dt) == 0
+            if mod(round(agent.measureTime,2),agent.measureWindow*agent.dt) == 0
                 % ------------- Bayesian filter -------------
                 %agent.estimate = BayesFilter(agent);
                 % --------------------------------------
@@ -168,52 +182,24 @@ classdef Agent < handle
                 % --------------------------------------
                 agent.measureTime = 0;
                 agent.nCollisions = 0;
-            end  
-            
-            % update estimation plot
-            if agent.selected == true; 
-                agent.plotindex = agent.plotindex + 1;
-                if mod(agent.plotindex,agent.lenStory) == 0
-                    agent.plotindex = 1;
+              
+                % update estimation plot
+                if agent.selected == true; 
+                    agent.plotindex = agent.plotindex + 1;
+                    if mod(agent.plotindex,agent.lenStory) == 0
+                        agent.plotindex = 1;
+                    end
+                    agent.cell_story(agent.plotindex) = agent.cell;
+                    agent.estimateStory(agent.plotindex) = agent.estimate;
+                    set(agent.plotHandle,'ydata',agent.cell_story);  
+                    set(agent.plotHandle2,'xdata',agent.plotindex,'ydata',agent.cell);
+                    set(agent.plotHandle3,'ydata',agent.estimateStory);      
                 end
-                agent.cell_story(agent.plotindex) = agent.cell;
-                agent.estimateStory(agent.plotindex) = agent.estimate;
-                set(agent.plotHandle,'ydata',agent.cell_story);  
-                set(agent.plotHandle2,'xdata',agent.plotindex,'ydata',agent.cell);
-                set(agent.plotHandle3,'ydata',agent.estimateStory);      
             end
-            
         end
         
         function agent = addCollisions(agent,collisions)
             agent.nCollisions = agent.nCollisions + collisions;
-        end
-        
-    end
-        
-    methods(Access = 'private')   
-        function w = PID(agent)
-            persistent E;
-            if isempty(E), E = 0; end
-            G = atan2(agent.goal(2,1) - agent.myState(2),agent.goal(1,1) - agent.myState(1));   
-            
-            if rem(agent.time,100) == 0; E = 0; end
-
-            phi = agent.myState(3);
-            G = rad2deg(G);
-
-            d180 = (wrapTo180(G) - wrapTo180(rad2deg(phi)));
-            d360 = (wrapTo360(G) - wrapTo360(rad2deg(phi)));
-            derr = [d180,d360];
-            [~,which] = min(abs(derr));
-            error = deg2rad(derr(which));
-            agent.err2goal = error;
-            E = E + error;
-            % ============ PI Controller ===============
-            kp = 5*agent.dt;
-            ki = 0.000005*agent.dt;
-            w = (kp*error + ki*E) / agent.dt;        
-            if abs(w) > agent.wMax; w = agent.wMax*w/abs(w); end % max ang.vel. limit 
         end
         
         function agentisincell = findCell(agent,point)
@@ -228,6 +214,33 @@ classdef Agent < handle
                 end          
                 ci = inpolygon(point(1,1),point(2,1),agent.grid{agentisincell}(1,:),agent.grid{agentisincell}(2,:));         
             end                
+        end
+        
+    end
+        
+    methods(Access = 'private')   
+        function w = PID(agent)
+            persistent E;
+            if isempty(E), E = 0; end
+            G = atan2(agent.goal(2,1) - agent.myState(2),agent.goal(1,1) - agent.myState(1));   
+            
+            if rem(agent.time,100) == 0; E = 0; end
+
+            pphi = agent.myState(3);
+            G = rad2deg(G);
+
+            d180 = (wrapTo180(G) - wrapTo180(rad2deg(pphi)));
+            d360 = (wrapTo360(G) - wrapTo360(rad2deg(pphi)));
+            derr = [d180,d360];
+            [~,which] = min(abs(derr));
+            error = deg2rad(derr(which));
+            agent.err2goal = error;
+            E = E + error;
+            % ============ PI Controller ===============
+            kp = 5*agent.dt;
+            ki = 0.000005*agent.dt;
+            w = (kp*error + ki*E) / agent.dt;        
+            if abs(w) > agent.wMax; w = agent.wMax*w/abs(w); end % max ang.vel. limit 
         end
         
         function estimate = BayesFilter(agent)
@@ -253,24 +266,28 @@ classdef Agent < handle
         
         function estimate = VITfilter(agent)
             
-            agent.rho = agent.M * agent.rho;                            % update expected swarm distribution
-            if agent.nCollisions > 0                                    % choose observation matrix row
-                G = agent.rho'.*agent.DD;
-            else
-                G = ones(1,size(agent.rho,1)) - agent.rho'.*agent.DD;
+            agent.mu = agent.M * agent.mu;                            % update expected swarm distribution
+            agent.phi = (agent.nAgents.*agent.dlt).*inv(diag(agent.Dlt))*agent.mu;
+            G = agent.phi';
+            if agent.nCollisions == 0                                    % choose observation matrix row
+                G = 1 - G;
             end
             
-            mu = zeros(size(agent.grid,2),1);                           % probability of cells occupancy
-            for ll = 1:size(agent.grid,2)
-                mu(ll) = G(1,ll) .* max(agent.M(ll,:) .* agent.belief'); 
+            bel_new = zeros(size(agent.grid,2),1);                           % probability of cells occupancy
+            for ii = 1:size(agent.grid,2)
+                mx = 0;
+                for jj = 1:size(agent.grid,2)
+                    mx = max(mx,agent.M(ii,jj)*agent.belief(jj));
+                end
+                bel_new(ii) = G(ii) * mx; 
             end
             
-            agent.belief = mu./sum(mu);                                 % agent belief
+            agent.belief = bel_new;                                 % agent belief
             [~,estimate] = max(agent.belief);                           % argmax (belief)
             
             if agent.selected == true 
                 disp('-------------')
-                disp(['\rho       :',num2str(agent.rho')]);
+                disp(['\mu        :',num2str(agent.mu')]);
                 disp(['n of coll  :',num2str(agent.nCollisions)]);
                 disp(['G          :',num2str(G(1,:))]);
                 disp(['belief     :',num2str(agent.belief')]);

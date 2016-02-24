@@ -7,7 +7,7 @@
 
 
 
-function robotArena(arena,r,khepera)
+function agent = robotArena(arena,r,khepera)
 %  ===================== STOP BUTTON =====================
 S.fh = figure('units','pix','pos',[200 100 170 130],'menubar','none','numbertitle','off','resize','off');
 S.pb = uicontrol('string','Stop Simulation!','callback',{@pb_call},'units','pixels',...
@@ -116,7 +116,10 @@ for cluster_ID = 1:numel(clusters)                      % for each cluster
         if agent(ag).waitingTime > 0
             nclu = setdiff(clu,ag);                     % set difference clu \ ag
             conf = conflictHeadings(data(:,ag),goal(:,ag),data(:,nclu),goal(:,nclu),arena.ggp);
-            if conf; goal(:,ag) = [1e3;1e3]; end        % if there is conflict assign dummy goal outside cell                                                
+            if conf; 
+                goal(:,ag) = [1e3;1e3];
+                agent(ag).cell = findCell(agent(ag),data(:,ag));
+            end        % if there is conflict assign dummy goal outside cell                                                
         end
     end      
 end

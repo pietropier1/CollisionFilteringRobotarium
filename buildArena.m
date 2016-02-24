@@ -7,6 +7,62 @@ function [ arena,InitConf ] = buildArena( type,arena )
 
 switch type
     
+    case '3track'
+        l = 1.2;
+        h = .7;
+        arena.cellNumber = 3;               % cell number
+        arena.grid{1} = [-l/4,3/5*l/2,l/2,l/2; h/2,h/2,0,-h/2];
+        arena.grid{2} = [-l/8,l/4,l/2,-l/2;(2/3*h)/(l/2)*(l/2-l/8)-h/2,-h/6,-h/2,-h/2];
+        arena.grid{3} = [-l/4,0,-l/2,-l/2; h/2,h/6,-h/2,h/4];
+        arena.Grid{1} = dilationPoly(arena.grid{1},1.2*arena.ggp);
+        arena.Grid{2} = dilationPoly(arena.grid{2},1.2*arena.ggp);
+        arena.Grid{3} = dilationPoly(arena.grid{3},1.2*arena.ggp);
+        arena.Interface{1} = [arena.grid{2}(1,2) arena.grid{1}(1,4); arena.grid{2}(2,2) arena.grid{1}(2,4)];
+        arena.Interface{2} = [arena.grid{2}(1,4) arena.grid{2}(1,1); arena.grid{2}(2,4) arena.grid{2}(2,1)];
+        arena.Interface{3} = [arena.grid{1}(1,1) arena.grid{3}(1,2); arena.grid{1}(2,1) arena.grid{3}(2,2)];
+        InitConf{1} = [1 2 3];
+        InitConf{2} = [4 5];
+        InitConf{3} = [6];
+        arena.M = eye(arena.cellNumber,arena.cellNumber);
+        
+        
+    case '5track'
+        l = 1.2;
+        h = .7;
+        arena.cellNumber = 5;               % cell number
+%         arena.grid{1} = [-0.4 0.6 0.30 -0.05   ; 0.35 0.35 0.10 0.1];
+%         arena.grid{2} = [0.30 0.6 0.6 0.3     ; 0.10 0.35 -0.15 0.05];
+%         arena.grid{3} = [0.3 0.6 -0.05 -0.05   ; 0.05 -0.15 -0.35 -0.1];
+%         arena.grid{4} = [-0.6 -0.05 -0.05 -0.6 ; -0.2 -0.1 -0.35 -0.35];
+%         arena.grid{5} = [-0.4 -0.05 -0.05 -0.6 ; 0.35 0.1 -0.1 -0.2];
+
+        arena.grid{1} = [-0.5 0.6 0.30 -0.15   ; 0.35 0.35 0.05 0.05];
+        arena.grid{2} = [0.30 0.6 0.6 0.3     ; 0.05 0.35 -0.25 0];
+        arena.grid{3} = [0.3 0.6 -0.05 -0.05   ; 0 -0.25 -0.35 -0.1];
+        arena.grid{4} = [-0.6 -0.05 -0.05 -0.55 ; -0.25 -0.1 -0.35 -0.3];
+        arena.grid{5} = [-0.5 -0.15 -0.05 -0.6 ; 0.35 0.05 -0.1 -0.25];
+        arena.Grid{1} = dilationPoly(arena.grid{1},1.2*arena.ggp);
+        arena.Grid{2} = dilationPoly(arena.grid{2},1.2*arena.ggp);
+        arena.Grid{3} = dilationPoly(arena.grid{3},1.2*arena.ggp);
+        arena.Grid{4} = dilationPoly(arena.grid{4},1.2*arena.ggp);
+        arena.Grid{5} = dilationPoly(arena.grid{5},1.2*arena.ggp);
+        arena.Interface{1} = [arena.grid{1}(1,2) arena.grid{1}(1,3); arena.grid{1}(2,2) arena.grid{1}(2,3)];
+        arena.Interface{2} = [arena.grid{2}(1,4) arena.grid{2}(1,3); arena.grid{2}(2,4) arena.grid{2}(2,3)];
+        arena.Interface{3} = [arena.grid{3}(1,4) arena.grid{3}(1,3); arena.grid{3}(2,4) arena.grid{3}(2,3)];
+        arena.Interface{4} = [arena.grid{4}(1,1) arena.grid{4}(1,2); arena.grid{4}(2,1) arena.grid{4}(2,2)];
+        arena.Interface{5} = [arena.grid{5}(1,1) arena.grid{5}(1,2); arena.grid{5}(2,1) arena.grid{5}(2,2)];
+        InitConf{1} = [1 2];
+        InitConf{2} = [3];
+        InitConf{3} = [4];
+        InitConf{4} = [5];
+        InitConf{5} = [6];
+        arena.M = eye(arena.cellNumber,arena.cellNumber);
+
+        gridAssistant(l,h,arena)
+
+        
+        
+    
     case '4blocks'
         arena.cellNumber = 4;             % x direction # of cell
         l = 1.2;
@@ -23,32 +79,6 @@ switch type
         InitConf{2} = [2 3];%[4 5 6 7 8];
         InitConf{3} = [4 5];%[9 10 11 12 13 14 15]; 
         InitConf{4} = [6];
-        
-    case '3tria'
-        l = 0.6;
-        h = 0.7;
-        arena.cellNumber = 3;             % x direction # of cell
-        arena.grid{1} = [-l,0,-l/2; h/2,h/2,-h/2];
-        arena.grid{2} = [0,l/2,-l/2; h/2,-h/2,-h/2];
-        arena.grid{3} = [0,l,l/2; h/2,h/2,-h/2];
-        arena.Grid{1} = dilationPoly(arena.grid{1},arena.ggp);
-        arena.Grid{2} = dilationPoly(arena.grid{2},arena.ggp);
-        arena.Grid{3} = dilationPoly(arena.grid{3},arena.ggp);
-        InitConf{1} = [1];
-        InitConf{2} = [2 3];%[4 5 6 7 8];
-        InitConf{3} = [4 5 6];%[9 10 11 12 13 14 15]; 
-        switch 2
-            case 1
-                arena.M = [0.9660    0.0170    0.0000
-                           0.0340    0.9434    0.0113
-                           0.0000    0.0396    0.9887];
-            case 2
-                arena.M = eye(arena.cellNumber,arena.cellNumber);
-            case 3
-                arena.M = [0.9000    0.0200    0.0200
-                           0.0400    0.9200    0.0400
-                           0.0600    0.0600    0.9400];        
-        end
         
     case '4tria'
         l = 1;
@@ -76,23 +106,7 @@ switch type
                 arena.M = eye(arena.cellNumber,arena.cellNumber);
         end
 
-        case '3track'
-        l = 1.2;
-        h = .7;
-        arena.cellNumber = 3;               % cell number
-        arena.grid{1} = [-l/4,3/5*l/2,l/2,l/2; h/2,h/2,0,-h/2];
-        arena.grid{2} = [-l/8,l/4,l/2,-l/2;(2/3*h)/(l/2)*(l/2-l/8)-h/2,-h/6,-h/2,-h/2];
-        arena.grid{3} = [-l/4,0,-l/2,-l/2; h/2,h/6,-h/2,h/4];
-        arena.Grid{1} = dilationPoly(arena.grid{1},1.2*arena.ggp);
-        arena.Grid{2} = dilationPoly(arena.grid{2},1.2*arena.ggp);
-        arena.Grid{3} = dilationPoly(arena.grid{3},1.2*arena.ggp);
-        arena.Interface{1} = [arena.grid{2}(1,2) arena.grid{1}(1,4); arena.grid{2}(2,2) arena.grid{1}(2,4)];
-        arena.Interface{2} = [arena.grid{2}(1,4) arena.grid{2}(1,1); arena.grid{2}(2,4) arena.grid{2}(2,1)];
-        arena.Interface{3} = [arena.grid{1}(1,1) arena.grid{3}(1,2); arena.grid{1}(2,1) arena.grid{3}(2,2)];
-        InitConf{1} = [1 2 3];
-        InitConf{2} = [4 5];
-        InitConf{3} = [6];
-        arena.M = eye(arena.cellNumber,arena.cellNumber);
+        
 end
 
 % ========= Compute cell areas =============
@@ -100,6 +114,7 @@ arena.Dlt = zeros(1,arena.cellNumber);
 for cc = 1:arena.cellNumber
     arena.Dlt(cc) = polyarea(arena.grid{cc}(1,:)',arena.grid{cc}(2,:)');
 end
-
+arena.Dlt./sum(arena.Dlt)
+sum(arena.Dlt)./(l*h)
 
 
