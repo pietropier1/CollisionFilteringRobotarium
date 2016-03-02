@@ -44,8 +44,8 @@ classdef Agent < handle
     properties(Constant)
         wMax = 2;                           % max angular velocity
         lenStory = 50;                      % length of continuous plot
-        measureWindow = 180;                 % period of collision registration window
-        cellDwell = 180;                    % cell dwell time
+        measureWindow = 220;                 % period of collision registration window
+        cellDwell = 220;                    % cell dwell time
         speed = 0.04;                       % linear velocity
         headindsTollerance = 0.4;           % tollerance in headings measure
     end
@@ -129,13 +129,13 @@ classdef Agent < handle
             v = agent.speed;                                                                    % initialize v to cruise speed
             
             % ==== Find Robot Cell ====
-            agent.cell = findCell(agent,agent.goal(1:2,1));
+            %agent.cell = findCell(agent,agent.goal(1:2,1));
+            agent.cell = findCell(agent);
             if agent.transitioning == 1; agent.cell = findCell(agent,agent.goal(:,2)); end
            
             % ==== Draw a new cell and Assign Goal ======
             if mod(round(agent.time,2),agent.cellDwell*agent.dt) == 0 && ~agent.transitioning
                 newcell = find( cumsum(agent.M(:,agent.cell)) > random('unif',0,1), 1 , 'first' );  % compute new cell
-                %display(['Agent',num2str(agent.ID),': new cell is:',num2str(newcell)])
                 if newcell ~= agent.cell
                     agent.goal = zeros(2,2);
                     agent.transitioning = 1;
@@ -148,7 +148,6 @@ classdef Agent < handle
                if agent.transitioning; agent.transitioning = 0; end
                agent.goal(:,1) = agent.goal(:,2); 
                agent.goal(:,2) = randInPoly(agent.Grid{agent.cell});
-               %display(['Goal reached - new assignment in cell: ',num2str(agent.cell)])
             end
             
             % ======== Check if in Collision ==============
@@ -156,7 +155,9 @@ classdef Agent < handle
                 if ~inpolygon(new_goal(1,1),new_goal(2,1),agent.Grid{agent.cell}(1,:),agent.Grid{agent.cell}(2,:));     % assign new goal if collision resolving goal is not inside the current cell
                     agent.waitingTime = 40;
                     new_goal = randInPoly(agent.Grid{agent.cell});
-                    %display(['Alternative goal asigned to agent:',num2str(agent.ID)])
+%                     if agent.transitioning
+%                         new_goal = randOnInterface(agent,findCell(agent));
+%                     end
                 end
 
                 if abs(agent.err2goal) > agent.headindsTollerance && dist2goal > agent.distanceTollerance
@@ -165,8 +166,7 @@ classdef Agent < handle
                 agent.goal(:,1) = new_goal;
                 agent.goal(:,2) = randInPoly(agent.Grid{agent.cell});   
             end
-            
-            
+                       
             
             % ============ Compute Controls =========
             w = PID(agent);
@@ -202,20 +202,6 @@ classdef Agent < handle
             agent.nCollisions = agent.nCollisions + collisions;
         end
         
-        function agentisincell = findCell(agent,point)
-            % recursevely try each cell until find the correct one (ci = 1); if point is empty return cell where agent is at, ow return cell point belongs to
-            if nargin == 1; point = agent.myState(1:2,1); end
-            ci = 0;
-            agentisincell = 0;
-            while ~ci 
-                agentisincell = agentisincell + 1;
-                if agentisincell > size(agent.grid,2); 
-                    error('No cell found!'); 
-                end          
-                ci = inpolygon(point(1,1),point(2,1),agent.grid{agentisincell}(1,:),agent.grid{agentisincell}(2,:));         
-            end                
-        end
-        
     end
         
     methods(Access = 'private')   
@@ -238,9 +224,23 @@ classdef Agent < handle
             E = E + error;
             % ============ PI Controller ===============
             kp = 5*agent.dt;
-            ki = 0.000005*agent.dt;
+            ki = 0.0005*agent.dt;
             w = (kp*error + ki*E) / agent.dt;        
             if abs(w) > agent.wMax; w = agent.wMax*w/abs(w); end % max ang.vel. limit 
+        end
+        
+        function agentisincell = findCell(agent,point)
+            % recursevely try each cell until find the correct one (ci = 1); if point is empty return cell where agent is at, ow return cell point belongs to
+            if nargin == 1; point = agent.myState(1:2,1); end
+            ci = 0;
+            agentisincell = 0;
+            while ~ci 
+                agentisincell = agentisincell + 1;
+                if agentisincell > size(agent.grid,2); 
+                    error('No cell found!'); 
+                end          
+                ci = inpolygon(point(1,1),point(2,1),agent.grid{agentisincell}(1,:),agent.grid{agentisincell}(2,:));         
+            end                
         end
         
         function estimate = BayesFilter(agent)

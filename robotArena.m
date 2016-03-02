@@ -87,6 +87,61 @@ end
 end
 
 
+function [collCoords,goal] = evaluateCollisionsBETA(arena,data,agent)
+% Evaluate clusters of agents in collision and compute new goals 
+% collCoords --> coordinates of agents in collision (used only for plot purposes)
+% new_goal --> new goals for each agent (the goals for agents not experiencing a new collision are unchanged)
+
+persistent old_clusters; if isempty(old_clusters); old_clusters{1} = 0; end
+N = arena.N;
+goal = [agent.goal];                                    % initialize new goals as old goals  
+goal = goal(:,1:2:end);                                 % consider only the first goal
+[~,~,clusters] = collisionFinder( data , arena.ggp );   % clusters of agents in collision
+for cluster_ID = 1:numel(clusters)                      % for each cluster
+    clu = clusters{cluster_ID};                         % agents of this cluster
+    if ~matchCells(clu,old_clusters)                    % if clu did not already existed in old_clusters 
+        xcg = sum(data(1,clu))./size(clu,2);            % center of mass of collision (x-coord) 
+        ycg = sum(data(2,clu))./size(clu,2);            % center of mass of collision (y-coord)
+
+        for aa = clu                                    % for each agent in the cluster
+            agent(aa).loms = 1;                         % set agent collision flag to true
+            addCollisions(agent(aa),1);                 % add a collision to the number of collisions agent has registered
+        end
+        new_heading = atan2( (data(2,clu)-ycg) , (data(1,clu)-xcg) );       % direction to cluster center of mass
+        goal(:,clu) = [data(1,clu) + 1.3*arena.ggp.*cos(new_heading);       % new goal away from center of mass
+                       data(2,clu) + 1.3*arena.ggp.*sin(new_heading)];   
+    end
+    
+    for ag = clu
+        if agent(ag).waitingTime > 0
+            
+            nclu = setdiff(clu,ag);                     % set difference clu \ ag
+            conf = conflictHeadings(data(:,ag),goal(:,ag),data(:,nclu),goal(:,nclu),arena.ggp);
+            if conf; 
+                goal(:,ag) = [1e3;1e3]; % if there is conflict assign dummy goal outside cell
+            end                                                        
+        end
+    end      
+end
+
+agentInCollision = sort([clusters{:}]);
+if size(agentInCollision,2) > arena.N; agentInCollision = 1:arena.N; end
+agentNotInCollision = setdiff(1:N,agentInCollision);
+for agnot = agentNotInCollision
+    agent(agnot).loms = 0;
+end
+
+old_clusters = clusters;
+collCoords = [data(1,agentInCollision) ; data(2,agentInCollision)];   % list of positions of colliding agent (used for red marks in the plot)
+end
+
+
+
+
+
+
+
+
 function [collCoords,goal] = evaluateCollisions(arena,data,agent)
 % Evaluate clusters of agents in collision and compute new goals 
 % collCoords --> coordinates of agents in collision (used only for plot purposes)
@@ -107,24 +162,25 @@ for cluster_ID = 1:numel(clusters)                      % for each cluster
             agent(aa).loms = 1;                         % set agent collision flag to true
             addCollisions(agent(aa),1);                 % add a collision to the number of collisions agent has registered
         end
-        new_heading = atan2( (data(2,clu)-ycg) , (data(1,clu)-xcg) );
-        goal(:,clu) = [data(1,clu) + 1.1*arena.ggp.*cos(new_heading);
-                       data(2,clu) + 1.1*arena.ggp.*sin(new_heading)];   
+        new_heading = atan2( (data(2,clu)-ycg) , (data(1,clu)-xcg) );       % direction to cluster center of mass
+        goal(:,clu) = [data(1,clu) + 1.3*arena.ggp.*cos(new_heading);       % new goal away from center of mass
+                       data(2,clu) + 1.3*arena.ggp.*sin(new_heading)];   
     end
     
     for ag = clu
         if agent(ag).waitingTime > 0
+            
             nclu = setdiff(clu,ag);                     % set difference clu \ ag
             conf = conflictHeadings(data(:,ag),goal(:,ag),data(:,nclu),goal(:,nclu),arena.ggp);
             if conf; 
-                goal(:,ag) = [1e3;1e3];
-                agent(ag).cell = findCell(agent(ag),data(:,ag));
-            end        % if there is conflict assign dummy goal outside cell                                                
+                goal(:,ag) = [1e3;1e3]; % if there is conflict assign dummy goal outside cell
+            end                                                        
         end
     end      
 end
 
 agentInCollision = sort([clusters{:}]);
+if size(agentInCollision,2) > arena.N; agentInCollision = 1:arena.N; end
 agentNotInCollision = setdiff(1:N,agentInCollision);
 for agnot = agentNotInCollision
     agent(agnot).loms = 0;
@@ -132,7 +188,6 @@ end
 
 old_clusters = clusters;
 collCoords = [data(1,agentInCollision) ; data(2,agentInCollision)];   % list of positions of colliding agent (used for red marks in the plot)
-
 end
 
 
