@@ -24,6 +24,7 @@ classdef Agent < handle
         cell_story = [];                    % cell movements progression
         estimateStory = [];                 % estimate progression  
         waitingTime;                        % number of step to wait before start moving again
+
     end
     
     properties (Access = private)
@@ -202,6 +203,9 @@ classdef Agent < handle
             agent.nCollisions = agent.nCollisions + collisions;
         end
         
+        function agent = resetWaitTimer(agent)
+            agent.waitingTime = 0;
+        end
     end
         
     methods(Access = 'private')   

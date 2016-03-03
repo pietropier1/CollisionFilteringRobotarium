@@ -40,7 +40,7 @@ switch type
     case 'sim'
         while ishandle(S.fh) 
             data = OSupdate(r,khepera);                                         % pull new robot data
-            [collCoords,new_goal] = evaluateCollisions(arena,data(1:2,:),agent);% evaluate collision coordinates and new computed goals
+            [collCoords,new_goal] = evaluateCollisionsBETA(arena,data(1:2,:),agent);% evaluate collision coordinates and new computed goals
      
             for aa = 1:arena.N
                 [V,W] = controller(agent(aa),data(:,aa),new_goal(:,aa));        % compute agent controls
@@ -108,20 +108,24 @@ for cluster_ID = 1:numel(clusters)                      % for each cluster
             addCollisions(agent(aa),1);                 % add a collision to the number of collisions agent has registered
         end
         new_heading = atan2( (data(2,clu)-ycg) , (data(1,clu)-xcg) );       % direction to cluster center of mass
-        goal(:,clu) = [data(1,clu) + 1.3*arena.ggp.*cos(new_heading);       % new goal away from center of mass
-                       data(2,clu) + 1.3*arena.ggp.*sin(new_heading)];   
+        goal(:,clu) = [data(1,clu) + 1.2*arena.ggp.*cos(new_heading);       % new goal away from center of mass
+                       data(2,clu) + 1.2*arena.ggp.*sin(new_heading)];   
     end
     
-    for ag = clu
-        if agent(ag).waitingTime > 0
-            
-            nclu = setdiff(clu,ag);                     % set difference clu \ ag
+    flag_rtl = 1;                                                               % flag run this loop (used to jup out of this loop if optimal assignment is performed)
+    for ag = clu                                                                % take on agent of the cluster
+        if agent(ag).waitingTime > 0  & flag_rtl                                % if this agent is on a wait, check if its heading is conflicting with some ngb
+            nclu = setdiff(clu,ag);                                             % set difference clu \ ag
             conf = conflictHeadings(data(:,ag),goal(:,ag),data(:,nclu),goal(:,nclu),arena.ggp);
-            if conf; 
-                goal(:,ag) = [1e3;1e3]; % if there is conflict assign dummy goal outside cell
+            if conf;                                                            % if this agent heading is on conflict 
+                goal(:,clu) = deconOptimal(data(1:2,clu),goal(1:2,clu));        %reassign all cluster goals optimally
+                
+                for iag = clu;resetWaitTimer(agent(iag)); end                                          % reset waiting time to 0
+                flag_rtl = 0;
             end                                                        
         end
-    end      
+    end  
+    
 end
 
 agentInCollision = sort([clusters{:}]);
