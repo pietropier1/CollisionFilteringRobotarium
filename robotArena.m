@@ -9,7 +9,8 @@
 
 function agent = robotArena(arena,r,khepera)
 %  ===================== STOP BUTTON =====================
-S.fh = figure('units','pix','pos',[200 100 170 130],'menubar','none','numbertitle','off','resize','off');
+in_SS = get(0,'screensize');
+S.fh = figure('units','pix','pos',[0.85*in_SS(1,3) 0.8*in_SS(1,4) 170 130],'menubar','none','numbertitle','off','resize','off');
 S.pb = uicontrol('string','Stop Simulation!','callback',{@pb_call},'units','pixels',...
                  'fontsize',15,'Backgroundcolor','r','fontweight','bold','position',[10 10 150 110]);
 drawnow; pause(0.01) % ===================================
@@ -40,7 +41,7 @@ switch type
     case 'sim'
         while ishandle(S.fh) 
             data = OSupdate(r,khepera);                                         % pull new robot data
-            [collCoords,new_goal] = evaluateCollisionsBETA(arena,data(1:2,:),agent);% evaluate collision coordinates and new computed goals
+            [collCoords,new_goal] = evaluateCollisions(arena,data(1:2,:),agent);% evaluate collision coordinates and new computed goals
      
             for aa = 1:arena.N
                 [V,W] = controller(agent(aa),data(:,aa),new_goal(:,aa));        % compute agent controls
@@ -97,6 +98,7 @@ N = arena.N;
 goal = [agent.goal];                                    % initialize new goals as old goals  
 goal = goal(:,1:2:end);                                 % consider only the first goal
 [~,~,clusters] = collisionFinder( data , arena.ggp );   % clusters of agents in collision
+collCoords = zeros(2,N);
 for cluster_ID = 1:numel(clusters)                      % for each cluster
     clu = clusters{cluster_ID};                         % agents of this cluster
     if ~matchCells(clu,old_clusters)                    % if clu did not already existed in old_clusters 
@@ -107,24 +109,52 @@ for cluster_ID = 1:numel(clusters)                      % for each cluster
             agent(aa).loms = 1;                         % set agent collision flag to true
             addCollisions(agent(aa),1);                 % add a collision to the number of collisions agent has registered
         end
-        new_heading = atan2( (data(2,clu)-ycg) , (data(1,clu)-xcg) );       % direction to cluster center of mass
-        goal(:,clu) = [data(1,clu) + 1.2*arena.ggp.*cos(new_heading);       % new goal away from center of mass
-                       data(2,clu) + 1.2*arena.ggp.*sin(new_heading)];   
+%         new_heading = atan2( (data(2,clu)-ycg) , (data(1,clu)-xcg) );       % direction to cluster center of mass
+%         goal(:,clu) = [data(1,clu) + 1.2*arena.ggp.*cos(new_heading);       % new goal away from center of mass
+%                        data(2,clu) + 1.2*arena.ggp.*sin(new_heading)];  
+        goal(:,clu) = deconOptimal(data(1:2,clu),goal(1:2,clu));           %reassign all cluster goals optimally
+        conf = conflictHeadings(data(:,ag),goal(:,ag),data(:,nclu),goal(:,nclu),arena.ggp);         % check conflict with current goal assignment
+        
+        try           
+        % check if new goal is unfeasible
+        for aa = clu
+            if ~inpolygon(goal(1,aa),goal(2,aa),arena.Grid{agent(aa).cell}(1,[1:end 1]) ,arena.Grid{agent(aa).cell}(2,[1:end 1]));     % if new goal is not inside the current cell
+                 [xg , yg] = polyxpoly( [xcg,goal(1,aa)] , [ycg,goal(2,aa)] , arena.Grid{agent(aa).cell}(1,[1:end 1]) , arena.Grid{agent(aa).cell}(2,[1:end 1]));   
+                 if isempty(xg); xg = xcg; yg = ycg; end
+                 goal(:,aa) = [xg(1);yg(1)];
+                 agent(aa).waitingTime = 5*randi(4,[1,1]);
+            end
+            
+        end
+        
+        catch err
+            display(err)
+            display(['x1 =[', num2str([xcg,goal(1,aa)]),']'])
+            display(['y1 =[', num2str([ycg,goal(2,aa)]),']'])
+            display(['x2 =[', num2str(arena.Grid{agent(aa).cell}(1,:)),']'])
+            display(['y2 =[', num2str(arena.Grid{agent(aa).cell}(2,:)),']'])
+            inpolygon(goal(1,aa),goal(2,aa),arena.Grid{agent(aa).cell}(1,:),arena.Grid{agent(aa).cell}(2,:))
+            [a,b] = polyxpoly( [data(1,aa);goal(1,aa)] , [data(2,aa);goal(2,aa)] , arena.Grid{agent(aa).cell}(1,:) , arena.Grid{agent(aa).cell}(2,:))
+            pause
+            return
+        end
+                   
     end
     
-    flag_rtl = 1;                                                               % flag run this loop (used to jup out of this loop if optimal assignment is performed)
-    for ag = clu                                                                % take on agent of the cluster
-        if agent(ag).waitingTime > 0  & flag_rtl                                % if this agent is on a wait, check if its heading is conflicting with some ngb
-            nclu = setdiff(clu,ag);                                             % set difference clu \ ag
-            conf = conflictHeadings(data(:,ag),goal(:,ag),data(:,nclu),goal(:,nclu),arena.ggp);
-            if conf;                                                            % if this agent heading is on conflict 
-                goal(:,clu) = deconOptimal(data(1:2,clu),goal(1:2,clu));        %reassign all cluster goals optimally
-                
-                for iag = clu;resetWaitTimer(agent(iag)); end                                          % reset waiting time to 0
-                flag_rtl = 0;
-            end                                                        
-        end
-    end  
+%     flag_rtl = 1;                                                               % flag run this loop (used to jup out of this loop if optimal assignment is performed)
+%     for ag = clu                                                                % take on agent of the cluster
+%         if agent(ag).waitingTime > 0  & flag_rtl                                % if this agent is on a wait, check if its heading is conflicting with some ngb
+%             nclu = setdiff(clu,ag);                                             % set difference clu \ ag
+%             conf = conflictHeadings(data(:,ag),goal(:,ag),data(:,nclu),goal(:,nclu),arena.ggp);         % check conflict with current goal assignment
+%             while conf;                                                            % if this agent heading is on conflict 
+%                 goal(:,clu) = deconOptimal(data(1:2,clu),goal(1:2,clu));           %reassign all cluster goals optimally
+%                 conf = conflictHeadings(data(:,ag),goal(:,ag),data(:,nclu),goal(:,nclu),arena.ggp);
+%             end   
+%             for iag = clu;resetWaitTimer(agent(iag)); end                                          % reset waiting time to 0
+%             flag_rtl = 0;
+%             
+%         end
+%     end  
     
 end
 

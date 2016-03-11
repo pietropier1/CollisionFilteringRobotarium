@@ -33,12 +33,15 @@ end
 
 vert_dil = [xi;yi];
 
-% % ===  plot === 
-% plot(vert_exp(1,:),vert_exp(2,:)); axis([-3 5 -3 5]), grid on,hold on
-% for pp = 1:n_vert
-%     plot([-5,5],[-5,5] .* slope(pp) + inter_p(pp),'k--')
-% end
-% plot(xi,yi,'or')
+% ===  plot === 
+if 0
+plot(vert_exp(1,:),vert_exp(2,:)); axis([-3 5 -3 5]), grid on,hold on
+for pp = 1:n_vert
+    plot([-5,5],[-5,5] .* slope(pp) + inter_p(pp),'k--')
+end
+plot(xi,yi,'or')
+
+end
 
 
 end

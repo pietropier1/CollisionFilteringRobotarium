@@ -22,8 +22,7 @@ classdef Agent < handle
         measureTime = 0;                    % time counter    
         time = 0;                           % simulation running time
         cell_story = [];                    % cell movements progression
-        estimateStory = [];                 % estimate progression  
-        waitingTime;                        % number of step to wait before start moving again
+        estimateStory = [];                 % estimate progression 
 
     end
     
@@ -40,13 +39,14 @@ classdef Agent < handle
         loms = 0;                           % loss of minimum separation flag
         nCollisions = 0;                    % number of collision
         transitioning = 0;                  % cell transfer flag: 1 if agent is transfering / agent going to an interface goal
+        waitingTime;                        % number of step to wait before start moving again
     end
     
     properties(Constant)
         wMax = 2;                           % max angular velocity
         lenStory = 50;                      % length of continuous plot
         measureWindow = 220;                 % period of collision registration window
-        cellDwell = 220;                    % cell dwell time
+        cellDwell = 80;                    % cell dwell time
         speed = 0.04;                       % linear velocity
         headindsTollerance = 0.4;           % tollerance in headings measure
     end
@@ -130,9 +130,8 @@ classdef Agent < handle
             v = agent.speed;                                                                    % initialize v to cruise speed
             
             % ==== Find Robot Cell ====
-            %agent.cell = findCell(agent,agent.goal(1:2,1));
             agent.cell = findCell(agent);
-            if agent.transitioning == 1; agent.cell = findCell(agent,agent.goal(:,2)); end
+            %if agent.transitioning == 1; agent.cell = findCell(agent,agent.goal(:,2)); end
            
             % ==== Draw a new cell and Assign Goal ======
             if mod(round(agent.time,2),agent.cellDwell*agent.dt) == 0 && ~agent.transitioning
@@ -148,18 +147,15 @@ classdef Agent < handle
             if dist2goal <= agent.distanceTollerance;
                if agent.transitioning; agent.transitioning = 0; end
                agent.goal(:,1) = agent.goal(:,2); 
-               agent.goal(:,2) = randInPoly(agent.Grid{agent.cell});
+               agent.goal(:,2) = randInPoly(agent.Grid{findCell(agent,agent.goal(:,2))}); % assign upcoming goal in the same cell as the current one
             end
             
             % ======== Check if in Collision ==============
             if agent.loms == 1 
-                if ~inpolygon(new_goal(1,1),new_goal(2,1),agent.Grid{agent.cell}(1,:),agent.Grid{agent.cell}(2,:));     % assign new goal if collision resolving goal is not inside the current cell
-                    agent.waitingTime = 40;
-                    new_goal = randInPoly(agent.Grid{agent.cell});
-%                     if agent.transitioning
-%                         new_goal = randOnInterface(agent,findCell(agent));
-%                     end
-                end
+%                 if ~inpolygon(new_goal(1,1),new_goal(2,1),agent.Grid{agent.cell}(1,:),agent.Grid{agent.cell}(2,:));     % assign new goal if collision resolving goal is not inside the current cell
+%                     agent.waitingTime = 40;
+%                     new_goal = randInPoly(agent.Grid{agent.cell});
+%                 end
 
                 if abs(agent.err2goal) > agent.headindsTollerance && dist2goal > agent.distanceTollerance
                     v = 0;                                          % if in collision and not on right heading yet set speed to 0
@@ -227,7 +223,7 @@ classdef Agent < handle
             agent.err2goal = error;
             E = E + error;
             % ============ PI Controller ===============
-            kp = 5*agent.dt;
+            kp = 7*agent.dt;
             ki = 0.0005*agent.dt;
             w = (kp*error + ki*E) / agent.dt;        
             if abs(w) > agent.wMax; w = agent.wMax*w/abs(w); end % max ang.vel. limit 
