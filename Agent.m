@@ -45,8 +45,10 @@ classdef Agent < handle
     properties(Constant)
         wMax = 2;                           % max angular velocity
         lenStory = 50;                      % length of continuous plot
+        %measureWindow = 15;                 % period of collision registration window (STATIC CASE)
         measureWindow = 220;                 % period of collision registration window
-        cellDwell = 90;                    % cell dwell time
+        %cellDwell = 10;                    % cell dwell time (STATIC CASE)
+        cellDwell = 90;                     % cell dwell time
         speed = 0.04;                       % linear velocity
         headindsTollerance = 0.4;           % tollerance in headings measure
     end
@@ -77,7 +79,7 @@ classdef Agent < handle
                
                 % Viterbi Initialization
                 Ncell = arena.cellNumber;
-                agent.mu = 1/Ncell.*ones(Ncell,1);
+                agent.mu = arena.rho;%1/Ncell.*ones(Ncell,1);
                 agent.phi = (agent.nAgents.*agent.dlt).*inv(diag(agent.Dlt))*agent.mu;
                 G = 1-agent.phi';
                 agent.belief = zeros(Ncell,1);
