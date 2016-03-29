@@ -41,11 +41,11 @@ switch type
         arena.grid{3} = [0.25 0.6 -0.05 -0.05   ; -0.05 -0.30 -0.35 -0.1];
         arena.grid{4} = [-0.6 -0.05 -0.05 -0.55 ; -0.2 -0.1 -0.35 -0.35];
         arena.grid{5} = [-0.5 -0.15 -0.05 -0.6 ; 0.35 0.05 -0.1 -0.2];
-        arena.Grid{1} = dilationPoly(arena.grid{1},arena.ggp);
-        arena.Grid{2} = dilationPoly(arena.grid{2},arena.ggp);
-        arena.Grid{3} = dilationPoly(arena.grid{3},arena.ggp);
-        arena.Grid{4} = dilationPoly(arena.grid{4},arena.ggp);
-        arena.Grid{5} = dilationPoly(arena.grid{5},arena.ggp);
+        arena.Grid{1} = dilationPoly(arena.grid{1},1.14*arena.ggp);
+        arena.Grid{2} = dilationPoly(arena.grid{2},1.14*arena.ggp);
+        arena.Grid{3} = dilationPoly(arena.grid{3},1.14*arena.ggp);
+        arena.Grid{4} = dilationPoly(arena.grid{4},1.14*arena.ggp);
+        arena.Grid{5} = dilationPoly(arena.grid{5},1.14*arena.ggp);
         arena.Interface{1} = [arena.grid{1}(1,2) arena.grid{1}(1,3); arena.grid{1}(2,2) arena.grid{1}(2,3)];
         arena.Interface{2} = [arena.grid{2}(1,4) arena.grid{2}(1,3); arena.grid{2}(2,4) arena.grid{2}(2,3)];
         arena.Interface{3} = [arena.grid{3}(1,4) arena.grid{3}(1,3); arena.grid{3}(2,4) arena.grid{3}(2,3)];

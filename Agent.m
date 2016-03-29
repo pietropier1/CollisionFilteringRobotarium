@@ -46,7 +46,7 @@ classdef Agent < handle
         wMax = 2;                           % max angular velocity
         lenStory = 50;                      % length of continuous plot
         measureWindow = 220;                 % period of collision registration window
-        cellDwell = 80;                    % cell dwell time
+        cellDwell = 90;                    % cell dwell time
         speed = 0.04;                       % linear velocity
         headindsTollerance = 0.4;           % tollerance in headings measure
     end
@@ -223,7 +223,7 @@ classdef Agent < handle
             agent.err2goal = error;
             E = E + error;
             % ============ PI Controller ===============
-            kp = 7*agent.dt;
+            kp = 10*agent.dt;
             ki = 0.0005*agent.dt;
             w = (kp*error + ki*E) / agent.dt;        
             if abs(w) > agent.wMax; w = agent.wMax*w/abs(w); end % max ang.vel. limit 

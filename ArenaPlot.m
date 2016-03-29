@@ -47,7 +47,7 @@ classdef ArenaPlot < handle
             
             if arena.makemovie
                 arenaPlot.MMvie = VideoWriter(['CollisionTrack',char(datetime)]);%,'MPEG-4'); 
-                set(arenaPlot.MMvie,'FrameRate',8); 
+                set(arenaPlot.MMvie,'FrameRate',36); 
                 open(arenaPlot.MMvie);
             end
         
