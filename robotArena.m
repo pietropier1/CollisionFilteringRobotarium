@@ -20,10 +20,10 @@ drawnow; pause(0.01) % ===================================
 if nargin == 3                                                  % matlab simulation 
     data = OSupdate(r,khepera);                                 % pull new data
     type = 'sim';
-elseif nargin == 2                                              % robotarium
+elseif nargin == 2                                              % robotarium experiment
     data = r.getPoses();                                        % pull new data
     type = 'robo';
-    % ========= Log Data File Init ===============              % File for registration of robot data
+    % ========= Log Data File Init ===============              % File for registration of robot datas
     logid = fopen(['datalog',char(datetime),'.txt'],'w');       % open file for simulation data recording
     fprintf(logid,'%s\r\n',' *** New Robotarium Session ***');
 else

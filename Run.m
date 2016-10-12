@@ -1,23 +1,27 @@
-% Main robot simulation runner
+% MAIN
+% Collision Filtering Simulations & Experiments
 
 % In order to use Robotarium, set below switch key to 'experiment'. 
 % Both cases in the below switch call the same robotArena.m file which starts the actual simulation. 
 % In robotArena.m experiement/simulation cases are automatically detected and no user input is requried
 
-clc; close all; clear classes;
-arena.makemovie = false;                                                    % Record matlab plot in video 
-arena.ggp = 0.0565;                                                           % Radius of robots protected area
+clc; close all; clear classes;                              
+simulationType = 'simulation';  %'experiment'                               % Use 'simulation' or 'experiment'
+transFlag = 1;                                                              % Consider transitions between cells? 1 yes - 0 no
+arena.makemovie = false;                                                    % Record matlab plot in video? 
+arena.ggp = 0.0565;                                                         % Radius of robots protected area
 arena.dt = 0.05;                                                            % Simulation time step    
-arena.agSel = 1;                                                            % Select which agent to follow
+arena.agSel = 1;                                                            % Select an agent to study - this agent will be plotted in green
 
 % ========= Build Domain Grid =============
 [arena,InitConf] = buildArena('5track',arena);                              % change first argument to change grid shape                        
 
 % ====== Compute Markov Transition Matrix =============
-arena.M = initHMM(arena);                                                  % Markov M used in track (overwrite arena.M from buildArena function).          
-
+if transFlag
+    arena.M = initHMM(arena);                                               % Markov M used in track (overwrite arena.M from buildArena function).          
+end
 % ========== Select Type of Analysis =============
-switch 'simulation'                                                         % Use 'simulation' or 'experiment'
+switch simulationType                                                       
     case 'simulation'                                                       % Use this when running MATLAB simulation
         arena.N = max([InitConf{:}]);                                       % Number of agents
         
@@ -27,20 +31,19 @@ switch 'simulation'                                                         % Us
             for cellID = 1:arena.cellNumber
                 if ~isempty( InitConf{cellID} )
                     for kID = InitConf{cellID}
-                        khepera(kID) = Khepera(kID,cellID,arena);                 % Physical agent
+                        khepera(kID) = Khepera(kID,cellID,arena);           % Construct a virtual agent
                     end
                 end
             end
-            data = [khepera.myState];
-        colliders = collisionFinder( data(1:2,:) , arena.ggp );
+            data = [khepera.myState];                                       % Collection of robot states
+            colliders = collisionFinder( data(1:2,:) , arena.ggp );
         end
         [ arena.rho ] = findDistribution( [khepera.myState],arena );        % Agent distribution: fraction of agents in each cell
         
         if size(arena.M) ~= arena.cellNumber; error('Error MM size!'); end  % Check MM size
         optitrackClient = OptitrackSimulator();                             % Create fake stream machine
         pause(0.001)
-        
-        
+       
         % ========= Run Simulation =============
         agent = robotArena(arena,optitrackClient,khepera);                     
         
@@ -61,6 +64,7 @@ switch 'simulation'                                                         % Us
 
         if size(arena.M) ~= arena.cellNumber; error('Error MM size!'); end
         pause(0.001)
+        
         % ========= Run Simulation =============
         robotArena(arena,r);
         

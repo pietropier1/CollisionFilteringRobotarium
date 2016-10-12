@@ -2,15 +2,10 @@ function [colliders,collided,collision] = collisionFinder( data , rPZ )
 % Compute distance between agents and find index of those involved in collision
 % Compute collision clusters
 
-% clear all, close all, clc
-% data = [0.07    0.0584   -0.0469   -0.2463   -0.2919   -0.4;
-%         -0.2731   -0.2523   -0.1936    0.1519    0.0371    0.0374];
-% rPZ = 0.06;
-
 N = size(data,2);
 DD = pdist2(data',data');                   % euclidian distance which between each point in data
 DD = DD + diag(1e2*ones(1,N));              % filter diagonal elements adding dummy values
-[colliders,collided] = ind2sub([N,N],find(DD <= 2*rPZ*1.05)); % couples of agents whose ditance is below robot diameter
+[colliders,collided] = ind2sub([N,N],find(DD <= 2*rPZ*1.05));           % couples of agents whose ditance is below robot diameter
 
 DD_coll = DD <= 2*rPZ*1.05;                                             % Binary collision matrix: ij = 1, if collision between i and j 
 [idxColl1, idxColl2] = ind2sub([N,N],find(tril(DD_coll) == 1));         

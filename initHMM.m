@@ -1,5 +1,7 @@
 function [P] = initHMM(arena)
 
+% Produce the Markov transition matrix between cells. 
+
 M = arena.cellNumber;
 % eps=min(arena.Dlt)*0.2;
 eps = 0.04;

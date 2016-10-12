@@ -1,12 +1,12 @@
 function [ arena,InitConf ] = buildArena( type,arena )
-% build arena features: different choices are listed below
+% build arena features - different available choices are listed below
 
 % arena.grid{i} => grid coordinates of i^th cell
 % arena.Grid{i} => grid coordinates of reduced size i^th cell. Agents goals are assigned within these smaller cells;
 %                   this prevents them from going outside the cell perimeter
+% arena.M => tranistion Markov matrix, initialized to an identity matrix; for static cases this is the definitive transition matrix
 
 switch type
-    
     case '3track'
         l = 1.2;
         h = .7;
@@ -24,7 +24,6 @@ switch type
         InitConf{2} = [4 5];
         InitConf{3} = [6];
         arena.M = eye(arena.cellNumber,arena.cellNumber);
-        
         
     case '5track'
         l = 1.2;
@@ -104,9 +103,7 @@ switch type
                       0.0133    0.0133    0.0133    0.9883];
             case 2
                 arena.M = eye(arena.cellNumber,arena.cellNumber);
-        end
-
-        
+        end    
 end
 
 % ========= Compute cell areas =============
@@ -114,7 +111,7 @@ arena.Dlt = zeros(1,arena.cellNumber);
 for cc = 1:arena.cellNumber
     arena.Dlt(cc) = polyarea(arena.grid{cc}(1,:)',arena.grid{cc}(2,:)');
 end
-arena.Dlt./sum(arena.Dlt)
-sum(arena.Dlt)./(l*h)
+display(['Relative cells surface: ',num2str(arena.Dlt./sum(arena.Dlt))])
+display(['Percentage of total surface used by the cells domain: ', num2str(sum(arena.Dlt)./(l*h))])
 
 
